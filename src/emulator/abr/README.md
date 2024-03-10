@@ -20,7 +20,7 @@ virtualenv -p python3 tf_venv
 echo "$(pwd)/Genet/src/emulator/abr" > tf_venv/lib/python3.6/site-packages/abr_emu.pth
 source tf_venv/bin/activate
 
-pip3 install numpy tensorflow==1.15.0 selenium pyvirtualdisplay numba torch tflearn xvfbwrapper matplotlib
+pip3 install numpy tensorflow==2.6.2 selenium pyvirtualdisplay numba torch tflearn xvfbwrapper matplotlib scipy
 ```
 
 ## Go to folder and download the chromedriver for linux:

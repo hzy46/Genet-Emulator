@@ -3,3 +3,4 @@ from pensieve.agent_policy.mpc import RobustMPC
 from pensieve.agent_policy.fast_mpc import FastMPC
 from pensieve.agent_policy.pensieve_jump import Pensieve
 from pensieve.agent_policy.bba import BufferBased
+from pensieve.agent_policy.custom_pensieve import CustomPensieve
