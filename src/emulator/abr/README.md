@@ -6,44 +6,22 @@ We provide two options:
 Since the full emulation running takes more than a day, the second option is faster for replotting.
 
 # Run the full emulation
-## Install
+## Setup
 ```bash
-deactivate  # if there is python venv activated. Otherwise, ignore.
-sudo add-apt-repository universe
-sudo apt-get update
-sudo apt-get -y install mahimahi xvfb python3-pip python3-tk unzip
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo apt-get -yf install ./google-chrome-stable_current_amd64.deb
-pip3 install virtualenv
-
-virtualenv -p python3 tf_venv
-echo "$(pwd)/Genet/src/emulator/abr" > tf_venv/lib/python3.6/site-packages/abr_emu.pth
-source tf_venv/bin/activate
-
-pip3 install numpy tensorflow==2.6.2 selenium pyvirtualdisplay numba torch tflearn xvfbwrapper matplotlib scipy
-```
-
-## Go to folder and download the chromedriver for linux:
-```bash
-cd Genet/src/emulator/abr/pensieve/virtual_browser/abr_browser_dir
-
-chrome_version=$(google-chrome --version | awk '{print $3}')
-wget https://chromedriver.storage.googleapis.com/${chrome_version}/chromedriver_linux64.zip
-unzip chromedriver_linux64.zip # (overwrite the old one if needed)
+bash install_for_evals.sh
 ```
 
 ## Run a ABR emulation example
 
-Open one terminal for video server
+Open a terminal for the video server
 ```bash
-cd Genet/src/emulator/abr/pensieve/video_server
-python video_server.py  --port=8000
+bash start_server.sh
 ```
 
-Open another terminal for virtual browser
+Now start the virtual browser
 ```bash
 cd Genet/src/emulator/abr
-bash pensieve/drivers/run_mahimahi_emulation_ADR.sh  --port=8000
+bash pensieve/drivers/run_mahimahi_emulation_Default_4G.sh  --port=8000
 ```
 
 # Replot our emulation results
