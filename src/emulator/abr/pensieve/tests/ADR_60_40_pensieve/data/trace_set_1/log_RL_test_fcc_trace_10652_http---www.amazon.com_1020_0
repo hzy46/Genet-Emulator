@@ -1,0 +1,2 @@
+timestamp	bit_rate	buffer_size	rebuffer_time	video_chunk_size	download_time	reward	bandwidth_estimation	future_bandwidth
+1709746383.440583	750	4.166666	0.396	58447	210	-16.728	2.226552380952381	0
