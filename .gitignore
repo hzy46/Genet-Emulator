@@ -105,7 +105,7 @@ venv.bak/
 
 .vim
 results_*
-figs
+# figs
 src/simulator/aurora_tensorboard
 src/simulator/useless
 src/simulator_bkp
