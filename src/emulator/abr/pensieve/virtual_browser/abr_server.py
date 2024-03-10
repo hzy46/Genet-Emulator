@@ -358,11 +358,12 @@ def run_abr_server(abr, trace_file, summary_dir, actor_path,
         with tf.Session() as sess ,open( log_file_path ,'wb' ) as log_file:
             # TODO: USE CUSTOM PENSIEVE HERE
             if network_type is None:
-                actor = ActorNetwork( sess ,
-                                    state_dim=[6 ,6] ,action_dim=3 ,
-                                    bitrate_dim=6)
-                sess.run( tf.initialize_all_variables() )
-                saver = tf.train.Saver()  # save neural net parameters
+                # actor = ActorNetwork( sess ,
+                #                     state_dim=[6 ,6] ,action_dim=3 ,
+                #                     bitrate_dim=6)
+                # sess.run( tf.initialize_all_variables() )
+                # saver = tf.train.Saver()  # save neural net parameters
+                actor = None
             else:
                 sample_state_dict = get_init_state_dict(network_type, actor_path)
                 actor = Network(sess, sample_state_dict, A_DIM, 1e-5)
@@ -372,7 +373,7 @@ def run_abr_server(abr, trace_file, summary_dir, actor_path,
 
             # restore neural net parameters
             nn_model = actor_path
-            if nn_model is not None:  # nn_model is the path to file
+            if actor is not None and nn_model is not None:  # nn_model is the path to file
                 print(nn_model)
                 saver.restore( sess ,nn_model )
                 #print( "Model restored." )
