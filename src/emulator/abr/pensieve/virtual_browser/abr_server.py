@@ -1,4 +1,5 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+import tflearn
 import argparse
 import csv
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -9,8 +10,16 @@ import time
 
 import numpy as np
 
-from pensieve.agent_policy import Pensieve, RobustMPC, BufferBased, FastMPC
+from pensieve.agent_policy import Pensieve, RobustMPC, BufferBased, FastMPC, CustomPensieve
 from pensieve.a3c.a3c_jump import ActorNetwork
+
+# new state reps
+from pensieve.ppo2.network import Network
+
+# new state reps
+from .state_func.default import *
+from .state_func.gpt35 import *
+from .state_func.gpt4 import *
 
 from pensieve.constants import (
     A_DIM,
@@ -66,7 +75,18 @@ def make_request_handler(server_states):
             self.log_writer = server_states['log_writer']
             self.sess = server_states['sess']
             self.actor = server_states['actor']
-
+            # for custom state rep
+            self.model_type = server_states['model_type']
+            self.network_type = server_states['network_type']
+            self.bit_rate_kbps_list = [1e-6] * 8
+            self.buffer_size_second_list = [1e-6] * 8
+            self.delay_second_list = [1e-6] * 8
+            self.video_chunk_size_bytes_list = [1e-6] * 8
+            self.next_chunk_bytes_sizes = []
+            self.video_chunk_remain_num = 0
+            self.total_chunk_num = 0
+            self.all_bit_rate_kbps = []
+            print(f'Using model_type {self.model_type} for network type {self.network_type}')
             BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
         def do_POST(self):
@@ -156,6 +176,9 @@ def make_request_handler(server_states):
                     else:
                         next_video_chunk_sizes.append(0)
 
+                # for custom state rep
+                self.update_state(post_data, video_chunk_size, video_chunk_fetch_time, next_video_chunk_sizes)
+
                 # this should be S_INFO number of terms
                 try:
                     state0 = VIDEO_BIT_RATE[post_data['lastquality']
@@ -178,13 +201,11 @@ def make_request_handler(server_states):
                     self.server_states['state'][0, 3, -1] = state3
                     self.server_states['state'][0, 4, :A_DIM] = state4
                     self.server_states['state'][0, 5, -1] = state5
-
                 except ZeroDivisionError:
                     # this should occur VERY rarely (1 out of 3000), should be
                     # a dash issue in this case we ignore the observation and
                     # roll back to an eariler one
                     pass
-
                     # log wall_time, bit_rate, buffer_size, rebuffer_time,
                     # video_chunk_size, download_time, reward
                 self.log_writer.writerow(
@@ -194,8 +215,12 @@ def make_request_handler(server_states):
                      post_data['bandwidthEst'] / 1000,
                      self.server_states['future_bandwidth']])
                 if isinstance(self.abr, Pensieve):
-                    bit_rate = self.abr.select_action(
-                        self.server_states['state'], last_bit_rate=self.server_states['last_bit_rate'])
+                    print('Not evaluating on 4g or 5g. Returning default state rep.')
+                    state = self.server_states['state']
+                    bit_rate = self.abr.select_action(state, last_bit_rate=self.server_states['last_bit_rate'])
+                elif isinstance(self.abr, CustomPensieve):
+                    state = self.get_state()
+                    bit_rate = self.abr.select_action(state)
                 elif isinstance(self.abr, RobustMPC):
                     last_index = int(post_data['lastRequest'])
                     future_chunk_cnt = min(self.abr.mpc_future_chunk_cnt,
@@ -245,6 +270,7 @@ def make_request_handler(server_states):
                     self.server_states['state'] = np.zeros((1, S_INFO, S_LEN))
                     # so that in the log we know where video ends
                     # self.log_writer.writerow('\n')
+                    print('Hit Last Video Chunk.')
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/plain')
@@ -252,10 +278,41 @@ def make_request_handler(server_states):
                 self.send_header('Access-Control-Allow-Origin', "*")
                 self.end_headers()
                 self.wfile.write(send_data.encode())
+                print('Sent Response for Next Chunk: ', send_data)
 
                 # record [state, action, reward]
                 # put it here after training, notice there is a shift in reward
                 # storage
+
+        def update_state(self, post_data, video_chunk_size, video_chunk_fetch_time, next_video_chunk_sizes):
+            self.bit_rate_kbps_list = self.bit_rate_kbps_list[1:] + [VIDEO_BIT_RATE[post_data['lastquality']] / M_IN_K]
+            self.buffer_size_second_list = self.buffer_size_second_list[1:] + [post_data['buffer']]
+            self.delay_second_list = self.delay_second_list[1:] + [video_chunk_fetch_time]
+            self.video_chunk_size_bytes_list = self.video_chunk_size_bytes_list[1:] + [video_chunk_size]
+            self.next_chunk_bytes_sizes = next_video_chunk_sizes
+            self.video_chunk_remain_num = TOTAL_VIDEO_CHUNK - self.server_states['video_chunk_count']
+            self.total_chunk_num = TOTAL_VIDEO_CHUNK
+            self.all_bit_rate_kbps = np.array(VIDEO_BIT_RATE) / M_IN_K
+
+        def process_state(self, state):
+            for i in range(len(state['normal_states'])):
+                state['normal_states'][i] = np.array(state['normal_states'][i], dtype=np.float32)
+            for i in range(len(state['time_series_states'])):
+                state['time_series_states'][i] = np.array(state['time_series_states'][i], dtype=np.float32)
+            return state
+
+
+        def get_state(self):
+            if self.model_type == 'gpt35':
+                state_func = gpt35_4g_state_func if self.network_type == '4g' else gpt35_5g_state_func
+                state = state_func(self.bit_rate_kbps_list, self.buffer_size_second_list, self.delay_second_list, self.video_chunk_size_bytes_list, self.next_chunk_bytes_sizes, self.video_chunk_remain_num, self.total_chunk_num, self.all_bit_rate_kbps)
+            elif self.model_type == 'gpt4':
+                state_func = gpt4_4g_state_func if self.network_type == '4g' else gpt4_5g_state_func
+                state = state_func(self.bit_rate_kbps_list, self.buffer_size_second_list, self.delay_second_list, self.video_chunk_size_bytes_list, self.next_chunk_bytes_sizes, self.video_chunk_remain_num, self.total_chunk_num, self.all_bit_rate_kbps)
+            else:
+                state = default_state_func(self.bit_rate_kbps_list, self.buffer_size_second_list, self.delay_second_list, self.video_chunk_size_bytes_list, self.next_chunk_bytes_sizes, self.video_chunk_remain_num, self.total_chunk_num, self.all_bit_rate_kbps)
+            # state = self.process_state(state)
+            return [state]  # NOTE: models expect list
 
         def do_GET(self):
             print('GOT REQ')
@@ -273,6 +330,15 @@ def make_request_handler(server_states):
     return Request_Handler
 
 
+def get_init_state_dict(network_type, actor_path):
+    if network_type == '4g':
+        init_state_func = init_gpt35_4g_state_func if 'gpt35' in actor_path else init_gpt4_4g_state_func
+    elif network_type == '5g':
+        init_state_func = init_gpt35_5g_state_func if 'gpt35' in actor_path else init_gpt4_5g_state_func
+    else:
+        init_state_func = init_default_state_func
+    return init_state_func()
+
 def run_abr_server(abr, trace_file, summary_dir, actor_path,
                    video_size_file_dir, ip='localhost', port=8333):
 
@@ -280,66 +346,96 @@ def run_abr_server(abr, trace_file, summary_dir, actor_path,
     log_file_path = os.path.join(
         summary_dir, 'log_{}_{}'.format(abr, os.path.basename(trace_file)))
 
-    with tf.Session() as sess ,open( log_file_path ,'wb' ) as log_file:
+    # Network type is only set for custom state rep
+    network_type = None
+    if '4g' in actor_path:
+        network_type = '4g'
+    elif '5g' in actor_path:
+        network_type = '5g'
 
-        actor = ActorNetwork( sess ,
-                              state_dim=[6 ,6] ,action_dim=3 ,
-                              bitrate_dim=6)
+    g = tf.Graph()
+    with g.as_default():
+        with tf.Session() as sess ,open( log_file_path ,'wb' ) as log_file:
+            # TODO: USE CUSTOM PENSIEVE HERE
+            if network_type is None:
+                actor = ActorNetwork( sess ,
+                                    state_dim=[6 ,6] ,action_dim=3 ,
+                                    bitrate_dim=6)
+                sess.run( tf.initialize_all_variables() )
+                saver = tf.train.Saver()  # save neural net parameters
+            else:
+                sample_state_dict = get_init_state_dict(network_type, actor_path)
+                actor = Network(sess, sample_state_dict, A_DIM, 1e-5)
+                tflearn.is_training(False, session=sess)
+                sess.run(tf.global_variables_initializer())
+                saver = tf.train.Saver(tf.trainable_variables())             
 
-        sess.run( tf.initialize_all_variables() )
-        saver = tf.train.Saver()  # save neural net parameters
+            # restore neural net parameters
+            nn_model = actor_path
+            if nn_model is not None:  # nn_model is the path to file
+                print(nn_model)
+                saver.restore( sess ,nn_model )
+                #print( "Model restored." )
 
-        # restore neural net parameters
-        nn_model = actor_path
-        if nn_model is not None:  # nn_model is the path to file
-            saver.restore( sess ,nn_model )
-            #print( "Model restored." )
+            model_type = 'default'
+            if abr == 'RobustMPC':
+                abr = RobustMPC()
+            elif abr == 'FastMPC':
+                abr = FastMPC()
+            elif abr == 'RL':
+                assert actor_path is not None, "actor-path is needed for RL abr."
+                # use to choose state representation
+                if 'gpt35' in actor_path:
+                    model_type = 'gpt35'
+                elif 'gpt4' in actor_path:
+                    model_type = 'gpt4'
+                else:
+                    model_type = 'default'
+                # Init Pensieve or CustomPensieve
+                if network_type is None:
+                    abr = Pensieve(16, summary_dir, actor=actor)
+                else:
+                    abr = CustomPensieve(actor)
+            elif abr == 'BufferBased':
+                abr = BufferBased()
+            else:
+                raise ValueError("ABR {} is not supported!".format(abr))
 
-        if abr == 'RobustMPC':
-            abr = RobustMPC()
-        elif abr == 'FastMPC':
-            abr = FastMPC()
-        elif abr == 'RL':
-            assert actor_path is not None, "actor-path is needed for RL abr."
-            abr = Pensieve(16, summary_dir, actor=actor)
-        elif abr == 'BufferBased':
-            abr = BufferBased()
-        else:
-            raise ValueError("ABR {} is not supported!".format(abr))
+            video_size = construct_bitrate_chunksize_map(video_size_file_dir)
+            np.random.seed(RANDOM_SEED)
 
-        video_size = construct_bitrate_chunksize_map(video_size_file_dir)
-        np.random.seed(RANDOM_SEED)
+            assert len(VIDEO_BIT_RATE) == A_DIM
 
-        assert len(VIDEO_BIT_RATE) == A_DIM
+            # interface to abr_rl server
 
-        # interface to abr_rl server
+            log_writer = csv.writer(open(log_file_path, 'w', 1), delimiter='\t',
+                                    lineterminator='\n')
+            log_writer.writerow(
+                ['timestamp', 'bit_rate', 'buffer_size', 'rebuffer_time',
+                'video_chunk_size', 'download_time', 'reward',
+                'bandwidth_estimation','future_bandwidth'])
 
-        log_writer = csv.writer(open(log_file_path, 'w', 1), delimiter='\t',
-                                lineterminator='\n')
-        log_writer.writerow(
-            ['timestamp', 'bit_rate', 'buffer_size', 'rebuffer_time',
-             'video_chunk_size', 'download_time', 'reward',
-             'bandwidth_estimation','future_bandwidth'])
+            # variables and states needed to track among requests
+            server_states = {
+                'sess': sess,
+                'actor': actor,
+                'log_writer': log_writer,
+                'abr': abr,
+                'video_size': video_size,
+                'video_chunk_count': 0,
+                "last_total_rebuf": 0,
+                'last_bit_rate': DEFAULT_QUALITY,
+                'state': np.zeros((1, S_INFO, S_LEN)),
+                'future_bandwidth': 0,
+                'model_type': model_type,
+                'network_type': network_type
+            }
+            handler_class = make_request_handler(server_states)
 
-        # variables and states needed to track among requests
-        server_states = {
-            'sess': sess,
-            'actor': actor,
-            'log_writer': log_writer,
-            'abr': abr,
-            'video_size': video_size,
-            'video_chunk_count': 0,
-            "last_total_rebuf": 0,
-            'last_bit_rate': DEFAULT_QUALITY,
-            'state': np.zeros((1, S_INFO, S_LEN)),
-            'future_bandwidth': 0
-        }
-        handler_class = make_request_handler(server_states)
-
-        server_address = (ip, port)
-        httpd = HTTPServer(server_address, handler_class)
-        print('Listening on ({}, {})'.format(ip, port))
-        httpd.serve_forever()
+            server_address = (ip, port)
+            httpd = HTTPServer(server_address, handler_class)
+            print('Listening on ({}, {})'.format(ip, port))
+            httpd.serve_forever()
 
 
 def main():

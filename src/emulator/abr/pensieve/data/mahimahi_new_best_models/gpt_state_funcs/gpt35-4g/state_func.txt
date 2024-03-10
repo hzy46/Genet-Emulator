@@ -1,0 +1,63 @@
+import numpy as np
+from scipy import stats
+
+def state_func(
+    bit_rate_kbps_list,
+    buffer_size_second_list,
+    delay_second_list,
+    video_chunk_size_bytes_list,
+    next_chunk_bytes_sizes,
+    video_chunk_remain_num,
+    total_chunk_num,
+    all_bit_rate_kbps,
+):
+    # Current code remains unchanged for normal states
+    normed_last_bit_rate = bit_rate_kbps_list[-1] / float(np.max(all_bit_rate_kbps))
+    buffer_norm_factor = 10.
+    normed_last_buffer_size = buffer_size_second_list[-1] / buffer_norm_factor
+    remaining_chunk_percentage = float(video_chunk_remain_num / total_chunk_num)
+    normal_states = [
+        [normed_last_bit_rate],
+        [normed_last_buffer_size],
+        [remaining_chunk_percentage],
+    ]
+
+    # Time series state 1: Estimated throughput in near history
+    history_window = 8
+    throughput_MBps_list = []
+    for i in range(history_window):
+        history_chunk_size_bytes = video_chunk_size_bytes_list[-(history_window - i)]
+        history_delay_second = delay_second_list[-(history_window - i)]
+        throughput_MBps_list.append(history_chunk_size_bytes / 1000. / 1000. / history_delay_second)
+
+    # Time series state 2: The normed download time (delay) in near history
+    delay_norm_factor = 10.
+    normed_delay_list = [x / delay_norm_factor for x in delay_second_list]
+
+    # Time series state 3: Treat next chunk sizes in MB as ts states, too.
+    next_chunk_bytes_MB = [x / 1000. / 1000. for x in next_chunk_bytes_sizes]
+
+    # New normal state: Quality of Experience (QoE)
+    qoe = (normed_last_bit_rate * normed_last_buffer_size) / np.mean(normed_delay_list)
+
+    # New time series state 4: Variability in throughput and delay
+    throughput_variance = np.var(throughput_MBps_list)
+    delay_variance = np.var(normed_delay_list)
+
+    # New time series state 5: Trend of throughput and delay
+    throughput_trend = stats.linregress(np.arange(history_window), throughput_MBps_list).slope
+    delay_trend = stats.linregress(np.arange(history_window), normed_delay_list).slope
+
+    time_series_states = [
+        throughput_MBps_list,
+        normed_delay_list,
+        next_chunk_bytes_MB,
+        [qoe],
+        [throughput_variance, delay_variance],
+        [throughput_trend, delay_trend]
+    ]
+
+    return {
+        "normal_states": normal_states,
+        "time_series_states": time_series_states,
+    }

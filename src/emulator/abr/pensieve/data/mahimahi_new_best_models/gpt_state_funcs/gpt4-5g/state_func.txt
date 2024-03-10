@@ -1,0 +1,65 @@
+import numpy as np
+
+def state_func(
+    bit_rate_kbps_list,
+    buffer_size_second_list,
+    delay_second_list,
+    video_chunk_size_bytes_list,
+    next_chunk_bytes_sizes,
+    video_chunk_remain_num,
+    total_chunk_num,
+    all_bit_rate_kbps,
+):
+    # Constants for normalization
+    buffer_norm_factor = 10.0
+    delay_norm_factor = 10.0
+    bitrate_norm_factor = np.max(all_bit_rate_kbps)
+    size_norm_factor = 1000.0 * 1000.0  # for converting bytes to MB
+    
+    # Normalized last bit rate
+    normed_last_bit_rate = bit_rate_kbps_list[-1] / bitrate_norm_factor
+    # Normalized last buffer size (clipped to max 10 seconds)
+    normed_last_buffer_size = np.clip(buffer_size_second_list[-1], 0, buffer_norm_factor) / buffer_norm_factor
+    # Percentage of remaining video chunks
+    remaining_chunk_percentage = video_chunk_remain_num / total_chunk_num
+
+    # Normal state list
+    normal_states = [
+        [normed_last_bit_rate],
+        [normed_last_buffer_size],
+        [remaining_chunk_percentage],
+    ]
+    
+    # Historical states for bit rates and buffer size differences
+    history_window = 8  # for time series state
+    
+    normed_bitrate_history = [br / bitrate_norm_factor for br in bit_rate_kbps_list[-history_window:]]
+    buffer_size_diffs = np.diff(buffer_size_second_list[-history_window - 1:]) / buffer_norm_factor
+    buffer_size_diffs = np.clip(buffer_size_diffs, -1, 1).tolist()  # clip to ensure it stays in range [-1, 1]
+
+    # Estimated throughput in near history normalized
+    throughput_MBps_list = [(video_chunk_size_bytes_list[-(history_window - i)] / size_norm_factor) / delay_second_list[-(history_window - i)] for i in range(history_window)]
+    
+    # The normed download time (delay) in near history
+    normed_delay_list = [(x / delay_norm_factor) for x in delay_second_list[-history_window:]]
+
+    # Throughput stability (variance)
+    throughput_variance = np.var(throughput_MBps_list) / np.var(all_bit_rate_kbps)
+
+    # Sizes for the next chunk normalized
+    next_chunk_sizes_norm = [size / size_norm_factor for size in next_chunk_bytes_sizes]
+
+    # Time series states list
+    time_series_states = [
+        normed_bitrate_history,
+        buffer_size_diffs,
+        throughput_MBps_list,
+        normed_delay_list,
+        next_chunk_sizes_norm,
+        [throughput_variance],  # included as a single-element list for consistency
+    ]
+
+    return {
+        "normal_states": normal_states,
+        "time_series_states": time_series_states,
+    }

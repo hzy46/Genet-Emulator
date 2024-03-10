@@ -1,0 +1,73 @@
+import numpy as np
+# scipy.stats could be used for z-score standardization if we were allowed to import it.
+
+def state_func(
+    bit_rate_kbps_list,
+    buffer_size_second_list,
+    delay_second_list,
+    video_chunk_size_bytes_list,
+    next_chunk_bytes_sizes,
+    video_chunk_remain_num,
+    total_chunk_num,
+    all_bit_rate_kbps,
+):
+    # Constants for normalization
+    buffer_norm_factor = 10.
+    delay_norm_factor = 10.
+    max_bit_rate = np.max(all_bit_rate_kbps)
+    history_window = min(8, len(bit_rate_kbps_list))  # min to handle shorter lists
+
+    # Normal states
+    normed_last_bit_rate = bit_rate_kbps_list[-1] / float(max_bit_rate)
+    normed_last_buffer_size = buffer_size_second_list[-1] / buffer_norm_factor
+    remaining_chunk_percentage = float(video_chunk_remain_num) / total_chunk_num
+    
+    # Bit rate change variance (smoothness metric)
+    bit_rate_changes = np.diff(bit_rate_kbps_list[-history_window:]) / max_bit_rate
+    smoothness_metric = np.var(bit_rate_changes)
+    
+    # Future chunk size ratio
+    last_chunk_size_MB = video_chunk_size_bytes_list[-1] / (1000. * 1000.)
+    future_chunk_size_ratio = [x / (last_chunk_size_MB * 1000. * 1000.) for x in next_chunk_bytes_sizes]
+    
+    # Normal states list
+    normal_states = [
+        [normed_last_bit_rate],
+        [normed_last_buffer_size],
+        [remaining_chunk_percentage],
+        [smoothness_metric],
+    ]
+    
+    # Time series states
+    # Throughput in near history (standardized)
+    throughput_MBps_list = np.array([
+        video_chunk_size_bytes_list[-(history_window - i)] / (delay_second_list[-(history_window - i)] * 1000. * 1000.)
+        for i in range(history_window)
+    ])
+    norm_throughput_MBps_list = (throughput_MBps_list - np.mean(throughput_MBps_list)) / np.std(throughput_MBps_list)
+
+    # Download time (delay) in near history (standardized)
+    normed_delay_list = (np.array(delay_second_list[-history_window:]) / delay_norm_factor - 1)
+
+    # Exponential Moving Average of throughput and delay
+    ema_throughput = np.average(throughput_MBps_list, weights=np.exp(np.arange(history_window)))
+    ema_delay = np.average(normed_delay_list, weights=np.exp(np.arange(history_window)))
+    
+    # Buffer size trend
+    buffer_size_trend = np.diff(buffer_size_second_list[-(history_window + 1):]) / buffer_norm_factor
+
+    # Time series states list
+    time_series_states = [
+        norm_throughput_MBps_list.tolist(),
+        normed_delay_list.tolist(),
+        future_chunk_size_ratio,
+        [ema_throughput],
+        [ema_delay],
+        buffer_size_trend.tolist(),
+    ]
+
+    # Return the states
+    return {
+        "normal_states": normal_states,
+        "time_series_states": time_series_states,
+    }
