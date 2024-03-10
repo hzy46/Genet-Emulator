@@ -3,11 +3,11 @@ set -e
 
 VIDEO_SIZE_DIR=pensieve/data/larger_video_sizes
 # ACTOR_PATH=pensieve/data/model_example/ADR_model/nn_model_ep_25600.ckpt
-ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/gpt35-4g/nn_model_ep_40000.ckpt
+# ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/gpt35-4g/nn_model_ep_40000.ckpt
 # ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/gpt35-5g/nn_model_ep_40000.ckpt
 # ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/gpt4-4g/nn_model_ep_40000.ckpt
 # ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/gpt4-5g/nn_model_ep_40000.ckpt
-# ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/default-4g/nn_model_ep_40000.ckpt
+ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/default-4g/nn_model_ep_40000.ckpt
 # ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/default-5g/nn_model_ep_40000.ckpt
 # METHOD=RobustMPC
 # METHOD=BufferBased

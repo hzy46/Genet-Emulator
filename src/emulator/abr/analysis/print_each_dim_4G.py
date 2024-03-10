@@ -3,25 +3,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 14})
 
-RESULTS_FOLDER = '../emu_results/norway/'
+RESULTS_FOLDER = '../emu_results/4G/'
 #RESULTS_FOLDER = '../Oboe_results/synthetic/'
-TRACE_FOLDER = '../data/real-world-traces/val_Norway/'
+TRACE_FOLDER = '../data/4G/'
 NUM_BINS = 100
 BITS_IN_BYTE = 8.0
 MILLISEC_IN_SEC = 1000.0
 M_IN_B = 1000000.0
 VIDEO_LEN = 48
-VIDEO_BIT_RATE = [300, 750, 1200, 1850, 2850, 4300]  # Kbps
+VIDEO_BIT_RATE = [1850, 2850, 4300, 12000, 24000, 53000]  # Kbps
 K_IN_M = 1000.0
 REBUF_P = 10
 SMOOTH_P = 1
 COLOR_MAP = plt.cm.jet #nipy_spectral, Set1,Paired 
 SIM_DP = 'sim_dp'
-#SCHEMES = ['BB', 'RB', 'FIXED', 'FESTIVE', 'BOLA', 'RL',  'sim_rl', SIM_DP]
-#SCHEMES = ['sim_bb', 'sim_mpc', 'sim_rl_pretrain', 'sim_rl_train_noise001', 'sim_rl_train_noise002', 'sim_rl_train_noise003']
-#SCHEMES = ['sim_RobustMPC_non', 'sim_adr_non', 'sim_oboe']
-SCHEMES = ['sim_BBA', 'sim_RobustMPC', 'sim_udr_1', 'sim_udr_2', 'sim_udr_3', 'sim_adr']
-#SCHEMES = ['sim_rl']
+SCHEMES = ['BufferBased', 'RL', 'RobustMPC']
+# SCHEMES = ['BufferBased', 'GPT4', 'GPT35', 'Default' 'RobustMPC']
 
 
 def compute_cdf(data):
@@ -77,10 +74,13 @@ def main():
 
         with open(RESULTS_FOLDER + log_file, 'r') as f:
 
-            for line in f:
+            for i, line in enumerate(f):
+                if i == 0:
+                    continue # skip the headers
                 parse = line.split()
                 if len(parse) <= 1:
                     break
+                print(line)
                 time_ms.append(float(parse[0]))
                 bit_rate.append(int(parse[1]))
                 buff.append(float(parse[2]))
