@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-VIDEO_SIZE_DIR=pensieve/data/video_sizes
+VIDEO_SIZE_DIR=pensieve/data/larger_video_sizes
 # ACTOR_PATH=${ROOT}/results/7_dims_rand_large_range_correct_rebuf_penalty/even_udr_1_rand_interval/actor_ep_50000.pth
-ACTOR_PATH=pensieve/data/mahimahi_new_best_models/UDR_2_model/nn_model_ep_2800.ckpt
-UP_LINK_SPEED_FILE=pensieve/data/12mbps
-TRACE_DIR=pensieve/data/trace_set_2/
+ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/default-5g/nn_model_ep_40000.ckpt
+UP_LINK_SPEED_FILE=pensieve/data/50mbps
+TRACE_DIR=pensieve/data/5G/
 CONFIG_FILE=pensieve/config/emulation/param_sweep.json
 
 # The architecture of emulation experiment.
@@ -23,6 +23,7 @@ CONFIG_FILE=pensieve/config/emulation/param_sweep.json
 # cd ${ROOT}/pensieve/video_server
 # python -m http.server &
 # cd ${ROOT}
+sudo sysctl -w net.ipv4.ip_forward=1
 
 trap "pkill -f abr_server" SIGINT
 trap "pkill -f abr_server" EXIT
@@ -43,7 +44,7 @@ trace_files=`ls ${TRACE_DIR}`
                     # echo "${buffer_threshold} ${delay} ${up_pkt_loss} ${down_pkt_loss} ${TRACE_FILE}"
                       mm-delay ${delay} mm-loss uplink ${up_pkt_loss} mm-loss downlink ${down_pkt_loss} \
                       mm-link ${UP_LINK_SPEED_FILE} ${TRACE_DIR}${trace_file} -- \
-                      bash -c "python -m pensieve.virtual_browser.virtual_browser --ip \${MAHIMAHI_BASE} --port 8005 --abr RL --video-size-file-dir ${VIDEO_SIZE_DIR} --summary-dir pensieve/tests/UDR-2_${buf_th}_${delay}_${TRACE_DIR} --trace-file ${trace_file} --actor-path ${ACTOR_PATH} --abr-server-port=8322"
+                      bash -c "python -m pensieve.virtual_browser.virtual_browser --ip \${MAHIMAHI_BASE} --port 8000 --abr RL --video-size-file-dir ${VIDEO_SIZE_DIR} --summary-dir pensieve/tests/Default_${buf_th}_${delay}_${TRACE_DIR} --trace-file ${trace_file} --actor-path ${ACTOR_PATH} --abr-server-port=8322"
 
 #                      mm-delay ${delay} mm-loss uplink ${up_pkt_loss} mm-loss downlink ${down_pkt_loss} \
 #                      mm-link ${UP_LINK_SPEED_FILE} ${TRACE_DIR}${trace_file} -- \

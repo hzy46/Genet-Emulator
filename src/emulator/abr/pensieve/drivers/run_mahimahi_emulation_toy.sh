@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-VIDEO_SIZE_DIR=pensieve/data/video_sizes
-# VIDEO_SIZE_DIR=pensieve/data/larger_video_sizes
+# VIDEO_SIZE_DIR=pensieve/data/video_sizes
+VIDEO_SIZE_DIR=pensieve/data/larger_video_sizes
 # ACTOR_PATH=${ROOT}/results/7_dims_rand_large_range_correct_rebuf_penalty/even_udr_1_rand_interval/actor_ep_50000.pth
-ACTOR_PATH=pensieve/data/mahimahi_new_best_models/ADR_model/nn_model_ep_2000.ckpt
-UP_LINK_SPEED_FILE=pensieve/data/12mbps
+ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/gpt35-4g/nn_model_ep_40000.ckpt
+UP_LINK_SPEED_FILE=pensieve/data/50mbps
 TRACE_DIR=pensieve/data/trace_set_toy/
 CONFIG_FILE=pensieve/config/emulation/param_sweep.json
 
