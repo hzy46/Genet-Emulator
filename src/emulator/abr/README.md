@@ -24,6 +24,10 @@ cd Genet/src/emulator/abr
 bash pensieve/drivers/run_mahimahi_emulation_Default_4G.sh  --port=8000
 ```
 
+Results are logged to ```Genet/src/emulator/abr/pensieve/tests/```
+Copy your results and rename as needed to ```Genet/src/emulator/abr/analysis/```
+Use the plotting scripts below, making changes as needed.
+
 # Replot our emulation results
 ## Fig.17 (c) data
 ```bash
