@@ -58,7 +58,7 @@ def parse_args():
                         help='Path to trace file.')
     parser.add_argument("--video-size-file-dir", type=str, required=True,
                         help='Dir to video size files')
-    parser.add_argument('--run_time', type=int, default=360,
+    parser.add_argument('--run_time', type=int, default=300,
                         help="Running time.")
 
     # networking related

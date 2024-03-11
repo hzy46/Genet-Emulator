@@ -219,8 +219,12 @@ def make_request_handler(server_states):
                     state = self.server_states['state']
                     bit_rate = self.abr.select_action(state, last_bit_rate=self.server_states['last_bit_rate'])
                 elif isinstance(self.abr, CustomPensieve):
-                    state = self.get_state()
-                    bit_rate = self.abr.select_action(state)
+                    try:
+                        state = self.get_state()
+                        bit_rate = self.abr.select_action(state)
+                    except ZeroDivisionError:
+                        print('ZeroDivisionError: Using last quality.')
+                        bit_rate = post_data['lastquality'] # default to last quality
                 elif isinstance(self.abr, RobustMPC):
                     last_index = int(post_data['lastRequest'])
                     future_chunk_cnt = min(self.abr.mpc_future_chunk_cnt,

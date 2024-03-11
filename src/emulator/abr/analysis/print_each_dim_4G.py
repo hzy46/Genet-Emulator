@@ -17,7 +17,8 @@ REBUF_P = 10
 SMOOTH_P = 1
 COLOR_MAP = plt.cm.jet #nipy_spectral, Set1,Paired 
 SIM_DP = 'sim_dp'
-SCHEMES = ['BufferBased', 'RL', 'RobustMPC']
+SCHEMES = ['Default', 'GPT4', 'GPT35']
+# SCHEMES = ['BufferBased', 'RL', 'RobustMPC']
 # SCHEMES = ['BufferBased', 'GPT4', 'GPT35', 'Default' 'RobustMPC']
 
 
@@ -84,7 +85,7 @@ def main():
                 time_ms.append(float(parse[0]))
                 bit_rate.append(int(parse[1]))
                 buff.append(float(parse[2]))
-                bw.append(float(parse[4]) / float(parse[5]) * BITS_IN_BYTE * MILLISEC_IN_SEC / M_IN_B)
+                bw.append(float(parse[4]) / max(float(parse[5]), 1e-6) * BITS_IN_BYTE * MILLISEC_IN_SEC / M_IN_B)
                 rebuf.append(float(parse[3]))
                 smooth.append(float(parse[6]))
                 reward.append(float(parse[7]))
