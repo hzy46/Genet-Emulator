@@ -332,11 +332,21 @@ def make_request_handler(server_states):
 
 def get_init_state_dict(network_type, actor_path):
     if network_type == '4g':
-        init_state_func = init_gpt35_4g_state_func if 'gpt35' in actor_path else init_gpt4_4g_state_func
+        if 'gpt35' in actor_path:
+            init_state_func = init_gpt35_4g_state_func
+        elif 'gpt4' in actor_path:
+            init_state_func = init_gpt4_4g_state_func
+        else:
+            init_state_func = init_default_state_func
     elif network_type == '5g':
-        init_state_func = init_gpt35_5g_state_func if 'gpt35' in actor_path else init_gpt4_5g_state_func
+        if 'gpt35' in actor_path:
+            init_state_func = init_gpt35_5g_state_func
+        elif 'gpt4' in actor_path:
+            init_state_func = init_gpt4_5g_state_func
+        else:
+            init_state_func = init_default_state_func
     else:
-        init_state_func = init_default_state_func
+        raise ValueError("Unsupported network type.")
     return init_state_func()
 
 def run_abr_server(abr, trace_file, summary_dir, actor_path,
