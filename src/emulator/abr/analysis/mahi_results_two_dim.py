@@ -23,7 +23,7 @@ def main():
     #  'sim_udr_3: bitrate: 1.1% rebuf: 0.0237' ,'sim_adr: bitrate: 1.11% rebuf: 0.0148']
 
     # ['BufferBased: bitrate: 30.14% rebuf: 0.03972', 
-    #  'RL: bitrate: 1.81% rebuf: 0.00134', 
+    #  'RL: bitrate: 21.65% rebuf: 0.04773', 
     #  'RobustMPC: bitrate: 29.82% rebuf: 0.00097']
 
     plt.rcParams['font.size'] = 32
@@ -32,16 +32,15 @@ def main():
     plt.rcParams['legend.fontsize'] = 32
     fig1, ax1 = plt.subplots(figsize=(9, 5))
 
-    fourg_bb_bitrate , fourg_bb_bitrate = 30.4, 0.03972
-    fourg_rl_bitrate ,fourg_rl_bitrate = 1.81, 0.00134
-    fourg_mpc_bitrate ,fourg_mpc_bitrate = 29.82, 0.00097
-
+    fourg_bb_bitrate, fourg_bb_rebuf  = 30.4, 0.03972
+    fourg_mpc_bitrate, fourg_mpc_rebuf = 29.82, 0.00097
+    fourg_rl_bitrate, fourg_rl_rebuf = 21.065, 0.04773
 
     msize = 200
 
-    ax1.scatter( [fourg_bb_bitrate],[fourg_bb_bitrate] ,marker='d' ,color='C0' ,s=msize ,label='BBA' )
-    ax1.scatter( [fourg_mpc_bitrate] ,[fourg_mpc_bitrate] ,marker='v' ,color='darkorange' ,s=msize ,label='MPC' )
-    ax1.scatter( [fourg_rl_bitrate] ,[fourg_rl_bitrate] ,marker='>' ,color='C1' ,s=msize ,label='RL-GPT35' )
+    ax1.scatter( [fourg_bb_rebuf],[fourg_bb_bitrate] ,marker='d' ,color='C0' ,s=msize ,label='BBA' )
+    ax1.scatter( [fourg_mpc_rebuf] ,[fourg_mpc_bitrate] ,marker='v' ,color='darkorange' ,s=msize ,label='MPC' )
+    ax1.scatter( [fourg_rl_rebuf] ,[fourg_rl_bitrate] ,marker='>' ,color='C1' ,s=msize ,label='RL-GPT35' )
 
     # ax1.annotate('BBA', ( fourg_bb_bitrate, fourg_bb_bitrate-0.03))
     # ax1.annotate('MPC', ( fourg_mpc_bitrate, fourg_mpc_bitrate-0.01))

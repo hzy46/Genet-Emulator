@@ -160,7 +160,7 @@ def make_request_handler(server_states):
                 # compute bandwidth measurement
                 video_chunk_fetch_time = post_data['lastChunkFinishTime'] - \
                     post_data['lastChunkStartTime']
-                # print('video chunk fetch time:', video_chunk_fetch_time)
+                print('video chunk fetch time:', video_chunk_fetch_time)
                 video_chunk_size = post_data['lastChunkSize']
 
                 # compute number of video chunks left
@@ -285,14 +285,14 @@ def make_request_handler(server_states):
                 # storage
 
         def update_state(self, post_data, video_chunk_size, video_chunk_fetch_time, next_video_chunk_sizes):
-            self.bit_rate_kbps_list = self.bit_rate_kbps_list[1:] + [VIDEO_BIT_RATE[post_data['lastquality']] / M_IN_K]
-            self.buffer_size_second_list = self.buffer_size_second_list[1:] + [post_data['buffer']]
-            self.delay_second_list = self.delay_second_list[1:] + [video_chunk_fetch_time]
-            self.video_chunk_size_bytes_list = self.video_chunk_size_bytes_list[1:] + [video_chunk_size]
-            self.next_chunk_bytes_sizes = next_video_chunk_sizes
-            self.video_chunk_remain_num = TOTAL_VIDEO_CHUNK - self.server_states['video_chunk_count']
-            self.total_chunk_num = TOTAL_VIDEO_CHUNK
-            self.all_bit_rate_kbps = np.array(VIDEO_BIT_RATE) / M_IN_K
+            self.bit_rate_kbps_list = self.bit_rate_kbps_list[1:] + [VIDEO_BIT_RATE[post_data['lastquality']]] # kbps
+            self.buffer_size_second_list = self.buffer_size_second_list[1:] + [post_data['buffer']]  # seconds
+            self.delay_second_list = self.delay_second_list[1:] + [video_chunk_fetch_time / 1000.0]  # seconds
+            self.video_chunk_size_bytes_list = self.video_chunk_size_bytes_list[1:] + [video_chunk_size]  # bytes
+            self.next_chunk_bytes_sizes = next_video_chunk_sizes  # bytes
+            self.video_chunk_remain_num = TOTAL_VIDEO_CHUNK - self.server_states['video_chunk_count'] # scalar
+            self.total_chunk_num = TOTAL_VIDEO_CHUNK  # scalar
+            self.all_bit_rate_kbps = np.array(VIDEO_BIT_RATE)  # kbps
 
         def process_state(self, state):
             for i in range(len(state['normal_states'])):
