@@ -160,7 +160,7 @@ def make_request_handler(server_states):
                 # compute bandwidth measurement
                 video_chunk_fetch_time = post_data['lastChunkFinishTime'] - \
                     post_data['lastChunkStartTime']
-                print('video chunk fetch time:', video_chunk_fetch_time)
+                # print('video chunk fetch time:', video_chunk_fetch_time)
                 video_chunk_size = post_data['lastChunkSize']
 
                 # compute number of video chunks left
