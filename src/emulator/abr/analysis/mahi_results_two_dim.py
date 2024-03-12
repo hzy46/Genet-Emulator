@@ -127,7 +127,7 @@ def main():
 
 
     ax3.scatter( [starlink_default_rebuf], [starlink_default_bitrate] ,marker='d', color='C0', s=msize ,label='Default' )
-    ax3.scatter( [starlink_gpt4_rebuf] ,[starlink_gpt4_bitrate] ,marker='>' ,color='C1',s=msize ,label='GPT4' )
+    ax3.scatter( [starlink_gpt4_rebuf] ,[starlink_gpt4_bitrate] ,marker='v' ,color='darkorange', s=msize ,label='GPT4' )
 
     ax3.set_ylabel( 'Bitrate (Mbps)' )
     ax3.set_yticks( [0, 0.5, 1.0, 1.5] )
