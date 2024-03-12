@@ -3,7 +3,7 @@ set -e
 
 VIDEO_SIZE_DIR=pensieve/data/video_sizes
 # ACTOR_PATH=${ROOT}/results/7_dims_rand_large_range_correct_rebuf_penalty/even_udr_1_rand_interval/actor_ep_50000.pth
-ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/default-starlink/nn_model_ep_40000.ckpt
+ACTOR_PATH=pensieve/data/mahimahi_new_best_models/gpt_eval_models/default-starlink/nn_model_ep_4000.ckpt
 UP_LINK_SPEED_FILE=pensieve/data/12mbps
 TRACE_DIR=pensieve/data/Starlink/
 CONFIG_FILE=pensieve/config/emulation/param_sweep.json
