@@ -118,17 +118,19 @@ def main():
     # os.system( "inkscape {} --export-pdf={}".format( svg_file ,pdf_file ) )
     # os.system("pdfcrop --margins 1 {} {}".format(pdf_file, pdf_file))
 
+    # ['Default: bitrate: 1.27% rebuf: 0.17254', 'GPT4: bitrate: 0.66% rebuf: 0.12982']
+
     fig3, ax3 = plt.subplots(figsize=(9, 5))
 
-    starlink_default_bitrate , starlink_default_rebuf = 23.5 ,0.24065
-    starlink_gpt35_bitrate ,starlink_gpt35_rebuf = 23.44 ,0.24855
+    starlink_default_bitrate , starlink_default_rebuf = 1.27 ,0.17254
+    starlink_gpt4_bitrate ,starlink_gpt4_rebuf = 0.66 ,0.12982
 
 
     ax3.scatter( [starlink_default_rebuf], [starlink_default_bitrate] ,marker='d', color='C0', s=msize ,label='Default' )
-    ax3.scatter( [starlink_gpt35_rebuf] ,[starlink_gpt35_bitrate] ,marker='>' ,color='C1',s=msize ,label='GPT35' )
+    ax3.scatter( [starlink_gpt4_rebuf] ,[starlink_gpt4_bitrate] ,marker='>' ,color='C1',s=msize ,label='GPT4' )
 
     ax3.set_ylabel( 'Bitrate (Mbps)' )
-    ax3.set_yticks( [0, 10, 20, 30] )
+    ax3.set_yticks( [0, 0.5, 1.0, 1.5] )
     ax3.set_xlabel( '90th percentile rebuffering ratio (%)' )
     ax3.set_xticks([0.05, 0.1, 0.15, 0.2, 0.25])
     ax3.invert_xaxis()
