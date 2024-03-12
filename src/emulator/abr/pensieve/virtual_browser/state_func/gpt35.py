@@ -153,3 +153,59 @@ def gpt35_5g_state_func(
         "normal_states": normal_states,
         "time_series_states": time_series_states,
     }
+
+
+def init_gpt35_starlink_state_func():
+    return {
+        "normal_states": [
+            np.array([0.]),  # normed_last_bit_rate
+            np.array([0.]),  # normed_last_buffer_size
+            np.array([0.]),  # remaining_chunk_percentage
+            np.array([0.]),  # normed_bit_rate_change
+        ],
+        "time_series_states": [
+            np.array([0.] * 8),  # normed_network_throughput
+        ],
+    }
+
+
+def gpt35_starlink_state_func(
+    bit_rate_kbps_list,
+    buffer_size_second_list,
+    delay_second_list,
+    video_chunk_size_bytes_list,
+    next_chunk_bytes_sizes,
+    video_chunk_remain_num,
+    total_chunk_num,
+    all_bit_rate_kbps,
+):
+    # Current state features
+    normed_last_bit_rate = bit_rate_kbps_list[-1] / float(np.max(all_bit_rate_kbps))
+    buffer_norm_factor = 10.
+    normed_last_buffer_size = buffer_size_second_list[-1] / buffer_norm_factor
+    remaining_chunk_percentage = float(video_chunk_remain_num / total_chunk_num)
+
+    # New state features
+    # Normalized bitrate change over the last few chunks
+    bit_rate_change = (bit_rate_kbps_list[-1] - bit_rate_kbps_list[-2]) / float(np.max(all_bit_rate_kbps))
+    # Network throughput in near history
+    network_throughput_MBps = []
+    for i in range(len(bit_rate_kbps_list)):
+        throughput = video_chunk_size_bytes_list[i] / 1000. / 1000. / delay_second_list[i]
+        network_throughput_MBps.append(throughput)
+
+    # Normalized new state features
+    normed_bit_rate_change = bit_rate_change / float(np.max(all_bit_rate_kbps))
+    normed_network_throughput = [x / (1000.0 * np.max(all_bit_rate_kbps)) for x in network_throughput_MBps]
+
+    normal_states = [
+        [normed_last_bit_rate, normed_last_buffer_size, remaining_chunk_percentage, normed_bit_rate_change]
+    ]
+    time_series_states = [
+        normed_network_throughput
+    ]
+
+    return {
+        "normal_states": normal_states,
+        "time_series_states": time_series_states,
+    }

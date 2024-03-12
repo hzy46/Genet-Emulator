@@ -307,15 +307,30 @@ def make_request_handler(server_states):
 
 
         def get_state(self):
-            if self.model_type == 'gpt35':
-                state_func = gpt35_4g_state_func if self.network_type == '4g' else gpt35_5g_state_func
-                state = state_func(self.bit_rate_kbps_list, self.buffer_size_second_list, self.delay_second_list, self.video_chunk_size_bytes_list, self.next_chunk_bytes_sizes, self.video_chunk_remain_num, self.total_chunk_num, self.all_bit_rate_kbps)
-            elif self.model_type == 'gpt4':
-                state_func = gpt4_4g_state_func if self.network_type == '4g' else gpt4_5g_state_func
-                state = state_func(self.bit_rate_kbps_list, self.buffer_size_second_list, self.delay_second_list, self.video_chunk_size_bytes_list, self.next_chunk_bytes_sizes, self.video_chunk_remain_num, self.total_chunk_num, self.all_bit_rate_kbps)
+            if self.network_type == '4g':
+                if self.model_type == 'gpt35':
+                    state_func = gpt35_4g_state_func
+                elif self.model_type == 'gpt4':
+                    state_func = gpt4_4g_state_func
+                else:
+                    state_func = default_state_func
+            elif self.network_type == '5g':
+                if self.model_type == 'gpt35':
+                    state_func = gpt35_5g_state_func
+                elif self.model_type == 'gpt4':
+                    state_func = gpt4_5g_state_func
+                else:
+                    state_func = default_state_func
+            elif self.network_type == 'starlink':
+                if self.model_type == 'gpt35':
+                    state_func = gpt35_starlink_state_func
+                elif self.model_type == 'gpt4':
+                    state_func = gpt4_starlink_state_func
+                else:
+                    state_func = default_state_func
             else:
-                state = default_state_func(self.bit_rate_kbps_list, self.buffer_size_second_list, self.delay_second_list, self.video_chunk_size_bytes_list, self.next_chunk_bytes_sizes, self.video_chunk_remain_num, self.total_chunk_num, self.all_bit_rate_kbps)
-            # state = self.process_state(state)
+                state_func = default_state_func
+            state = state_func(self.bit_rate_kbps_list, self.buffer_size_second_list, self.delay_second_list, self.video_chunk_size_bytes_list, self.next_chunk_bytes_sizes, self.video_chunk_remain_num, self.total_chunk_num, self.all_bit_rate_kbps)
             return [state]  # NOTE: models expect list
 
         def do_GET(self):
@@ -349,6 +364,13 @@ def get_init_state_dict(network_type, actor_path):
             init_state_func = init_gpt4_5g_state_func
         else:
             init_state_func = init_default_state_func
+    elif network_type == 'starlink':
+        if 'gpt35' in actor_path:
+            init_state_func = init_gpt35_starlink_state_func
+        elif 'gpt4' in actor_path:
+            init_state_func = init_gpt4_starlink_state_func
+        else:
+            init_state_func = init_default_state_func
     else:
         raise ValueError("Unsupported network type.")
     return init_state_func()
@@ -366,6 +388,8 @@ def run_abr_server(abr, trace_file, summary_dir, actor_path,
         network_type = '4g'
     elif '5g' in actor_path:
         network_type = '5g'
+    elif 'starlink' in actor_path:
+        network_type = 'starlink'
 
     g = tf.Graph()
     with g.as_default():

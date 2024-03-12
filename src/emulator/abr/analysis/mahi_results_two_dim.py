@@ -118,6 +118,30 @@ def main():
     # os.system( "inkscape {} --export-pdf={}".format( svg_file ,pdf_file ) )
     # os.system("pdfcrop --margins 1 {} {}".format(pdf_file, pdf_file))
 
+    fig3, ax3 = plt.subplots(figsize=(9, 5))
+
+    starlink_default_bitrate , starlink_default_rebuf = 23.5 ,0.24065
+    starlink_gpt35_bitrate ,starlink_gpt35_rebuf = 23.44 ,0.24855
+
+
+    ax3.scatter( [starlink_default_rebuf], [starlink_default_bitrate] ,marker='d', color='C0', s=msize ,label='Default' )
+    ax3.scatter( [starlink_gpt35_rebuf] ,[starlink_gpt35_bitrate] ,marker='>' ,color='C1',s=msize ,label='GPT35' )
+
+    ax3.set_ylabel( 'Bitrate (Mbps)' )
+    ax3.set_yticks( [0, 10, 20, 30] )
+    ax3.set_xlabel( '90th percentile rebuffering ratio (%)' )
+    ax3.set_xticks([0.05, 0.1, 0.15, 0.2, 0.25])
+    ax3.invert_xaxis()
+    ax3.spines['top'].set_visible( False )
+    ax3.spines['right'].set_visible( False )
+
+    fig3.legend(bbox_to_anchor=(0, 1.02, 1, 0.14), ncol=4, loc="upper center",
+                borderaxespad=0, borderpad=0.2, columnspacing=0.01, handletextpad=0.001)
+
+    pdf_file = os.path.join( SAVE_ROOT , 'mahi_starlink_arrow.pdf')
+    fig3.savefig( pdf_file ,bbox_inches='tight' )
+    # os.system( "inkscape {} --export-pdf={}".format( svg_file ,pdf_file ) )
+    # os.system("pdfcrop --margins 1 {} {}".format(pdf_file, pdf_file))
 
 
 if __name__ == '__main__':
