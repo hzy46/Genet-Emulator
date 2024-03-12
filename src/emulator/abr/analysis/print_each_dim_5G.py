@@ -17,8 +17,10 @@ REBUF_P = 10
 SMOOTH_P = 1
 COLOR_MAP = plt.cm.jet #nipy_spectral, Set1,Paired 
 SIM_DP = 'sim_dp'
+SCHEMES = ['Default', 'GPT35']
+# SCHEMES = ['Default', 'GPT4', 'GPT35']
 # SCHEMES = ['BufferBased', 'RL', 'RobustMPC']
-SCHEMES = ['BufferBased', 'GPT4', 'GPT35', 'Default' 'RobustMPC']
+# SCHEMES = ['BufferBased', 'GPT4', 'GPT35', 'Default' 'RobustMPC']
 
 def compute_cdf(data):
     """ Return the cdf of input data.

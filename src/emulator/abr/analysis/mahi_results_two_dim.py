@@ -67,7 +67,9 @@ def main():
     # ax1.annotate('Genet', ( fcc_genet_rebuf+0.005, fcc_genet_bitrate+0.02))
 
     ax1.set_ylabel('Bitrate (Mbps)')
+    ax1.set_yticks( [0, 10, 20, 30] )
     ax1.set_xlabel('90th percentile rebuffering ratio (%)')
+    ax1.set_xticks([0.05, 0.1, 0.15, 0.2, 0.25])
     ax1.invert_xaxis()
     ax1.spines['top'].set_visible( False )
     ax1.spines['right'].set_visible( False )
@@ -76,8 +78,8 @@ def main():
     fig1.legend(bbox_to_anchor=(0, 1.02, 1, 0.14), ncol=4, loc="upper center",
                 borderaxespad=0, borderpad=0.2, columnspacing=0.01, handletextpad=0.001)
 
-    svg_file = os.path.join( SAVE_ROOT ,'mahi_fcc_arrow.svg' )
-    pdf_file = os.path.join( SAVE_ROOT ,'mahi_fcc_arrow.pdf' )
+    # svg_file = os.path.join( SAVE_ROOT ,'mahi_fcc_arrow.svg' )
+    pdf_file = os.path.join( SAVE_ROOT ,'mahi_4g_arrow.pdf' )
     fig1.savefig( pdf_file ,bbox_inches='tight' )
 
 
@@ -85,51 +87,36 @@ def main():
     # os.system( "inkscape {} --export-pdf={}".format( svg_file ,pdf_file ) )
     # os.system( "pdfcrop --margins 1 {} {}".format( pdf_file ,pdf_file ) )
 
-    # fig2, ax2 = plt.subplots(figsize=(9, 5))
+    fig2, ax2 = plt.subplots(figsize=(9, 5))
 
-    # # ['sim_BBA: bitrate: 1.03% rebuf: 0.07658' ,'sim_RobustMPC: bitrate: 1.05% rebuf: 0.05053' ,
-    # #  'sim_udr_1: bitrate: 1.04% rebuf: 0.07323' ,'sim_udr_2: bitrate: 0.96% rebuf: 0.04276' ,
-    # #  'sim_udr_3: bitrate: 0.95% rebuf: 0.04796' ,'sim_adr: bitrate: 0.95% rebuf: 0.04498']
+    # ['sim_BBA: bitrate: 1.03% rebuf: 0.07658' ,'sim_RobustMPC: bitrate: 1.05% rebuf: 0.05053' ,
+    #  'sim_udr_1: bitrate: 1.04% rebuf: 0.07323' ,'sim_udr_2: bitrate: 0.96% rebuf: 0.04276' ,
+    #  'sim_udr_3: bitrate: 0.95% rebuf: 0.04796' ,'sim_adr: bitrate: 0.95% rebuf: 0.04498']
 
-    # norway_genet_bitrate ,norway_genet_rebuf = 1.04 ,0.043
+    # ['Default: bitrate: 23.5% rebuf: 0.24065', 'GPT35: bitrate: 23.44% rebuf: 0.24855']
 
-    # norway_udr1_bitrate ,norway_udr1_rebuf = 1.04 ,0.073
-    # norway_udr2_bitrate ,norway_udr2_rebuf = 0.96 ,0.043
-    # norway_udr3_bitrate ,norway_udr3_rebuf = 0.95 ,0.048
-
-    # norway_bba_bitrate ,norway_bba_rebuf = 1.03 ,0.077
-    # norway_mpc_bitrate ,norway_mpc_rebuf = 1.05 ,0.054
-    # norway_oboe_bitrate ,norway_oboe_rebuf = 1.04 ,0.051
-
-    # ax2.scatter( [norway_bba_rebuf], [norway_bba_bitrate] ,marker='d', color='C0', s=msize ,label='BBA' )
-    # ax2.scatter( [norway_mpc_rebuf] ,[norway_mpc_bitrate] ,marker='>' ,color='C1',s=msize ,label='MPC' )
-    # ax2.scatter( [norway_oboe_rebuf] ,[norway_oboe_bitrate] ,marker='v' ,color='darkorange',s=msize ,label='Oboe' )
-    # ax2.scatter( [norway_udr1_rebuf] ,[norway_udr1_bitrate] ,marker='^' ,color='C3',s=msize ,label='RL1' )
-    # ax2.scatter( [norway_udr2_rebuf] ,[norway_udr2_bitrate] ,marker='<' ,color='C4',s=msize ,label='RL2' )
-    # ax2.scatter( [norway_udr3_rebuf] ,[norway_udr3_bitrate] ,marker='p' ,color='C5',s=msize ,label='RL3' )
-    # ax2.scatter( [norway_genet_rebuf] ,[norway_genet_bitrate] , s=msize ,color='C2', label='Genet' )
-
-    # ax2.annotate('BBA', (norway_bba_rebuf+0.0001, norway_bba_bitrate-0.015))
-    # ax2.annotate('MPC', (norway_mpc_rebuf+0.005, norway_mpc_bitrate-0.02))
-    # ax2.annotate('Oboe', ( norway_oboe_rebuf+0.001, norway_oboe_bitrate-0.015))
-    # ax2.annotate('RL1', (norway_udr1_rebuf-0.001, norway_udr1_bitrate-0.01))
-    # ax2.annotate('RL2', (norway_udr2_rebuf+0.003, norway_udr2_bitrate+0.01))
-    # ax2.annotate('RL3', (norway_udr3_rebuf+0.006, norway_udr3_bitrate))
-    # ax2.annotate('Genet', (norway_genet_rebuf+0.005, norway_genet_bitrate+0.01))
+    fiveg_default_bitrate ,fiveg_default_rebuf = 23.5 ,0.24065
+    fiveg_gpt35_bitrate ,fiveg_gpt35_rebuf = 23.44 ,0.24855
 
 
+    ax2.scatter( [fiveg_default_rebuf], [fiveg_default_bitrate] ,marker='d', color='C0', s=msize ,label='Default' )
+    ax2.scatter( [fiveg_gpt35_rebuf] ,[fiveg_gpt35_bitrate] ,marker='>' ,color='C1',s=msize ,label='GPT35' )
 
-    # ax2.set_ylabel( 'Bitrate (Mbps)' )
-    # ax2.set_xlabel( '90th percentile rebuffering ratio (%)' )
-    # ax2.invert_xaxis()
-    # ax2.spines['top'].set_visible( False )
-    # ax2.spines['right'].set_visible( False )
+    ax2.set_ylabel( 'Bitrate (Mbps)' )
+    ax2.set_yticks( [0, 10, 20, 30] )
+    ax2.set_xlabel( '90th percentile rebuffering ratio (%)' )
+    ax2.set_xticks([0.05, 0.1, 0.15, 0.2, 0.25])
+    ax2.invert_xaxis()
+    ax2.spines['top'].set_visible( False )
+    ax2.spines['right'].set_visible( False )
 
-    # svg_file = os.path.join( SAVE_ROOT ,'mahi_norway_arrow.svg' )
-    # pdf_file = os.path.join( SAVE_ROOT , 'mahi_norway_arrow.pdf')
-    # fig2.savefig( pdf_file ,bbox_inches='tight' )
-    # # os.system( "inkscape {} --export-pdf={}".format( svg_file ,pdf_file ) )
-    # # os.system("pdfcrop --margins 1 {} {}".format(pdf_file, pdf_file))
+    fig2.legend(bbox_to_anchor=(0, 1.02, 1, 0.14), ncol=4, loc="upper center",
+                borderaxespad=0, borderpad=0.2, columnspacing=0.01, handletextpad=0.001)
+
+    pdf_file = os.path.join( SAVE_ROOT , 'mahi_5g_arrow.pdf')
+    fig2.savefig( pdf_file ,bbox_inches='tight' )
+    # os.system( "inkscape {} --export-pdf={}".format( svg_file ,pdf_file ) )
+    # os.system("pdfcrop --margins 1 {} {}".format(pdf_file, pdf_file))
 
 
 
