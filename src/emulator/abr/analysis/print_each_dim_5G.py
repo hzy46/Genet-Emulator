@@ -212,16 +212,34 @@ def main():
         # SCHEMES_REW.append(scheme + ': ' + str(mean_rewards[scheme]))
 
 
-    colors = [COLOR_MAP(i) for i in np.linspace(0, 1, len(ax.lines))]
-    for i,j in enumerate(ax.lines):
-        j.set_color(colors[i])
-
-    ax.legend(SCHEMES_REW)
+    # colors = [COLOR_MAP(i) for i in np.linspace(0, 1, len(ax.lines))]
+    # for i,j in enumerate(ax.lines):
+    #     j.set_color(colors[i])
+        
     print(SCHEMES_REW)
-    plt.ylabel('Mean reward')
-    plt.xlabel('trace index')
-    plt.title('Emulation: each dim')
-    plt.show()
+    plot_metric(reward_all, 'Mean QoE Score', 'State Design', './figs/5G', 'reward_5G.png')
+    plot_metric(bit_rate_all, 'Mean bitrate (Mbps)', 'State Design', './figs/5G', 'mean_bitrate_5G.png')
+    plot_metric(rebuf_all, 'Mean rebuf', 'State Design', './figs/5G', 'mean_rebuf_5G.png')
+    plot_metric(smooth_all, 'Mean smoothness', 'State Design', './figs/5G', 'mean_smooth_5G.png')
+
+def plot_metric(metric, ylabel, xlabel, directory, filename):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for i, scheme in enumerate(SCHEMES):
+        if 'bitrate' in ylabel or 'smooth' in ylabel:
+            ax.bar(i, np.mean(metric[scheme]) / K_IN_M)
+        else:
+            ax.bar(i, np.mean(metric[scheme]), yerr=np.var(metric[scheme]))
+    ax.set_xticks(np.arange(len(SCHEMES)))
+    ax.set_xticklabels(SCHEMES, rotation=30)
+    plt.ylabel(ylabel)
+    plt.xlabel(xlabel)
+    # create dir if not exist
+    if not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+    plt.savefig(f'{directory}/{filename}', bbox_inches='tight', dpi=300)
+    plt.clf()
+
 
 
 

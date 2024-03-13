@@ -197,33 +197,52 @@ def main():
 
     print(mean_rebuf_ratio, "--------mean_rebuf_ratio")
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
 
 
-    for scheme in SCHEMES:
-        ax.plot(reward_all[scheme])
+    # for scheme in SCHEMES:
+    #     ax.plot(reward_all[scheme])
 
     SCHEMES_REW = []
     for scheme in SCHEMES:
-        SCHEMES_REW.append(scheme + ': ' + 'bitrate: ' + str(mean_bitrate[scheme])
-                           + '% ' + 'rebuf: ' + str(mean_rebuf_ratio[scheme]))
+        SCHEMES_REW.append(scheme + ': '
+                           + 'reward: ' + str(mean_rewards[scheme]) + '±' + str(error_bar[scheme]) + ' ' 
+                            + ' bitrate: ' + str(mean_bitrate[scheme]) + ' '
+                           + ' percent rebuf: ' + str(per_rebuf[scheme]) + ' '
+                           + 'rebuf ratio: ' + str(mean_rebuf_ratio[scheme]) + ' '
+                           + 'smooth: ' + str(mean_smooth[scheme]) + ' ') 
 
         # SCHEMES_REW.append(scheme + ': ' + str(mean_rewards[scheme]))
 
 
-    colors = [COLOR_MAP(i) for i in np.linspace(0, 1, len(ax.lines))]
-    for i,j in enumerate(ax.lines):
-        j.set_color(colors[i])
+    # colors = [COLOR_MAP(i) for i in np.linspace(0, 1, len(ax.lines))]
+    # for i,j in enumerate(ax.lines):
+    #     j.set_color(colors[i])
 
-    ax.legend(SCHEMES_REW)
     print(SCHEMES_REW)
-    plt.ylabel('Mean reward')
-    plt.xlabel('trace index')
-    plt.title('Emulation: each dim')
-    plt.show()
+    plot_metric(reward_all, 'Mean QoE Score', 'State Design', './figs/Starlink', 'reward_Starlink.png')
+    plot_metric(bit_rate_all, 'Mean bitrate (Mbps)', 'State Design', './figs/Starlink', 'mean_bitrate_Starlink.png')
+    plot_metric(rebuf_all, 'Mean rebuf', 'State Design', './figs/Starlink', 'mean_rebuf_Starlink.png')
+    plot_metric(smooth_all, 'Mean smoothness', 'State Design', './figs/Starlink', 'mean_smooth_Starlink.png')
 
-
+def plot_metric(metric, ylabel, xlabel, directory, filename):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for i, scheme in enumerate(SCHEMES):
+        if 'bitrate' in ylabel or 'smooth' in ylabel:
+            ax.bar(i, np.mean(metric[scheme]) / K_IN_M)
+        else:
+            ax.bar(i, np.mean(metric[scheme]), yerr=np.var(metric[scheme]))
+    ax.set_xticks(np.arange(len(SCHEMES)))
+    ax.set_xticklabels(SCHEMES, rotation=30)
+    plt.ylabel(ylabel)
+    plt.xlabel(xlabel)
+    # create dir if not exist
+    if not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+    plt.savefig(f'{directory}/{filename}', bbox_inches='tight', dpi=300)
+    plt.clf()
 
 if __name__ == '__main__':
     main()
