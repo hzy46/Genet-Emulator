@@ -158,10 +158,7 @@ def gpt35_5g_state_func(
 def init_gpt35_starlink_state_func():
     return {
         "normal_states": [
-            np.array([0.]),  # normed_last_bit_rate
-            np.array([0.]),  # normed_last_buffer_size
-            np.array([0.]),  # remaining_chunk_percentage
-            np.array([0.]),  # normed_bit_rate_change
+            np.array([0., 0., 0., 0.]),  # normed_last_bit_rate, normed_last_buffer_size, remaining_chunk_percentage, normed_bit_rate_change
         ],
         "time_series_states": [
             np.array([0.] * 8),  # normed_network_throughput

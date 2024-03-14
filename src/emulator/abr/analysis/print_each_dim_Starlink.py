@@ -16,9 +16,7 @@ REBUF_P = 10
 SMOOTH_P = 1
 COLOR_MAP = plt.cm.jet #nipy_spectral, Set1,Paired 
 SIM_DP = 'sim_dp'
-SCHEMES = ['Default', 'GPT4']
-# SCHEMES = ['Default', 'GPT35']
-# SCHEMES = ['Default', 'GPT4', 'GPT35']
+SCHEMES = ['Default', 'GPT4', 'GPT35']
 # SCHEMES = ['BufferBased', 'RL', 'RobustMPC']
 # SCHEMES = ['BufferBased', 'GPT4', 'GPT35', 'Default' 'RobustMPC']
 
@@ -221,12 +219,16 @@ def main():
     #     j.set_color(colors[i])
 
     print(SCHEMES_REW)
-    plot_metric(reward_all, 'Mean QoE Score', 'State Design', './figs/Starlink', 'reward_Starlink.png')
-    plot_metric(bit_rate_all, 'Mean bitrate (Mbps)', 'State Design', './figs/Starlink', 'mean_bitrate_Starlink.png')
-    plot_metric(rebuf_all, 'Mean rebuf', 'State Design', './figs/Starlink', 'mean_rebuf_Starlink.png')
-    plot_metric(smooth_all, 'Mean smoothness', 'State Design', './figs/Starlink', 'mean_smooth_Starlink.png')
+    plot_metric_bar(reward_all, 'Mean QoE Score', 'State Design', './figs/Starlink', 'reward_Starlink.png')
+    plot_metric_cdf(reward_all, 'QoE Score', './figs/Starlink', 'reward_cdf_Starlink.png')
+    plot_metric_bar(bit_rate_all, 'Mean bitrate (Mbps)', 'State Design', './figs/Starlink', 'mean_bitrate_Starlink.png')
+    plot_metric_cdf(bit_rate_all, 'Bitrate (Mbps)', './figs/Starlink', 'bitrate_cdf_Starlink.png')
+    plot_metric_bar(rebuf_all, 'Mean rebuf', 'State Design', './figs/Starlink', 'mean_rebuf_Starlink.png')
+    plot_metric_cdf(rebuf_all, 'Rebuf', './figs/Starlink', 'rebuf_cdf_Starlink.png')
+    plot_metric_bar(smooth_all, 'Mean smoothness', 'State Design', './figs/Starlink', 'mean_smooth_Starlink.png')
+    plot_metric_cdf(smooth_all, 'Smoothness', './figs/Starlink', 'smooth_cdf_Starlink.png')
 
-def plot_metric(metric, ylabel, xlabel, directory, filename):
+def plot_metric_bar(metric, ylabel, xlabel, directory, filename):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     for i, scheme in enumerate(SCHEMES):
@@ -243,6 +245,26 @@ def plot_metric(metric, ylabel, xlabel, directory, filename):
         os.makedirs(directory, exist_ok=True)
     plt.savefig(f'{directory}/{filename}', bbox_inches='tight', dpi=300)
     plt.clf()
+
+def plot_metric_cdf(metric, xlabel, directory, filename):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for i, scheme in enumerate(SCHEMES):
+        val = np.array(metric[scheme])
+        if 'bitrate' in xlabel or 'smooth' in xlabel:
+            sorted_metric, cdf = compute_cdf(val / K_IN_M)
+        else:
+            sorted_metric, cdf = compute_cdf(val)
+        ax.plot(sorted_metric, cdf, label=scheme)
+    plt.ylabel('CDF')
+    plt.xlabel(xlabel)
+    plt.legend()
+    # create dir if not exist
+    if not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+    plt.savefig(f'{directory}/{filename}', bbox_inches='tight', dpi=300)
+    plt.clf()
+
 
 if __name__ == '__main__':
     main()
