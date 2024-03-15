@@ -37,7 +37,7 @@ while [[ true ]]; do
             sleep 5s
             bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-5G-${method}-trace-${trace_file} &
             exist_task=t
-            _lock_parallelism 60
+            _lock_parallelism 20
             port=$((${port} + 5))
         done
     done
