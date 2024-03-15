@@ -14,13 +14,14 @@ function _lock_parallelism {
     done
 } 
 
+# clear
+ps aux | grep virtual_browser | awk '{print $2}' | xargs kill
+ps aux | grep video_server | awk '{print $2}' | xargs kill
 
 # starlink test
 port=31000
 trace_dir="pensieve/data/starlink_scaled_mahimahi/"
 trace_files=`ls ${trace_dir}`
-
-
 
 
 for method in default gpt35 gpt4; do
