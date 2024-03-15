@@ -27,6 +27,8 @@ cd pensieve/video_server
 python video_server.py --port ${video_server_port} & 
 cd ../../
 
+sleep 3s
+
 mm-delay 40 mm-loss uplink 0 mm-loss downlink 0 mm-link pensieve/data/12mbps ${mahimahi_link_file} -- bash -xc "python -m pensieve.virtual_browser.virtual_browser --ip \${MAHIMAHI_BASE} --port ${video_server_port} --abr RL --video-size-file-dir pensieve/data/video_sizes --summary-dir ${summary_dir} --trace-file ${trace_file} --actor-path ${model_path} --abr-server-port=${abr_server_port}"
 
 ps aux | grep ${video_server_port} | grep video_server | awk '{print $2}' | xargs kill
