@@ -38,7 +38,7 @@ for method in default gpt35 gpt4; do
                         continue
                     fi
                 fi
-                echo ret_file
+                echo $ret_file
                 # bash run_single_test.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
                 # _lock_parallelism 10
                 port=$((${port} + 5))
