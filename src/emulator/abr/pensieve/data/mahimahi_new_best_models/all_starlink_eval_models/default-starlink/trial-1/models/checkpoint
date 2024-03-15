@@ -1,0 +1,6 @@
+model_checkpoint_path: "/tmp/global-id-ab5d1d14ce3c1d05e1fb4db69bde43d1-exp-65e30cc5-0408-42e0-a7b9-366f07f3f549-seed-1/models/nn_model_ep_4000.ckpt"
+all_model_checkpoint_paths: "/tmp/global-id-ab5d1d14ce3c1d05e1fb4db69bde43d1-exp-65e30cc5-0408-42e0-a7b9-366f07f3f549-seed-1/models/nn_model_ep_3600.ckpt"
+all_model_checkpoint_paths: "/tmp/global-id-ab5d1d14ce3c1d05e1fb4db69bde43d1-exp-65e30cc5-0408-42e0-a7b9-366f07f3f549-seed-1/models/nn_model_ep_3700.ckpt"
+all_model_checkpoint_paths: "/tmp/global-id-ab5d1d14ce3c1d05e1fb4db69bde43d1-exp-65e30cc5-0408-42e0-a7b9-366f07f3f549-seed-1/models/nn_model_ep_3800.ckpt"
+all_model_checkpoint_paths: "/tmp/global-id-ab5d1d14ce3c1d05e1fb4db69bde43d1-exp-65e30cc5-0408-42e0-a7b9-366f07f3f549-seed-1/models/nn_model_ep_3900.ckpt"
+all_model_checkpoint_paths: "/tmp/global-id-ab5d1d14ce3c1d05e1fb4db69bde43d1-exp-65e30cc5-0408-42e0-a7b9-366f07f3f549-seed-1/models/nn_model_ep_4000.ckpt"

@@ -17,10 +17,10 @@ REBUF_P = 10
 SMOOTH_P = 1
 COLOR_MAP = plt.cm.jet #nipy_spectral, Set1,Paired 
 SIM_DP = 'sim_dp'
-SCHEMES = ['Default', 'GPT35']
-# SCHEMES = ['Default', 'GPT4', 'GPT35']
+SCHEMES = ['Default', 'GPT4', 'GPT35']
 # SCHEMES = ['BufferBased', 'RL', 'RobustMPC']
 # SCHEMES = ['BufferBased', 'GPT4', 'GPT35', 'Default' 'RobustMPC']
+
 
 def compute_cdf(data):
     """ Return the cdf of input data.
@@ -61,6 +61,8 @@ def main():
 
     log_files = os.listdir(RESULTS_FOLDER)
     for log_file in log_files:
+        print(log_file)
+        skip_log = False
 
         time_ms = []
         bit_rate = []
@@ -72,10 +74,14 @@ def main():
         smooth =[]
 
         #print(log_file)
-
         with open(RESULTS_FOLDER + log_file, 'r') as f:
-
-            for i, line in enumerate(f):
+            lines = f.readlines()
+            if len(lines) < VIDEO_LEN:
+                # skip logs where model fails to stream
+                print('skipping', log_file)
+                skip_log = True
+                continue
+            for i, line in enumerate(lines):
                 if i == 0:
                     continue # skip the headers
                 parse = line.split()
@@ -85,43 +91,61 @@ def main():
                 time_ms.append(float(parse[0]))
                 bit_rate.append(int(parse[1]))
                 buff.append(float(parse[2]))
-                bw.append(float(parse[4]) / float(parse[5]) * BITS_IN_BYTE * MILLISEC_IN_SEC / M_IN_B)
+                bw.append(float(parse[4]) / max(float(parse[5]), 1e-6) * BITS_IN_BYTE * MILLISEC_IN_SEC / M_IN_B)
                 rebuf.append(float(parse[3]))
                 smooth.append(float(parse[6]))
                 reward.append(float(parse[7]))
             #print( reward, "--------------------" )
+        if not skip_log:
+            print('log_file', log_file)
+            time_ms = np.array(time_ms)
+            time_ms -= time_ms[0]
 
-        time_ms = np.array(time_ms)
-        time_ms -= time_ms[0]
+            # print log_file
 
-        # print log_file
+            for scheme in SCHEMES:
+                if scheme in log_file:
+                    time_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = time_ms
 
-        for scheme in SCHEMES:
-            if scheme in log_file:
-                time_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = time_ms
+                    raw_bit_rate_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = bit_rate
+                    raw_rebuf_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = rebuf
+                    bw_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = bw
+                    raw_smooth_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = smooth
+                    raw_reward_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = reward
 
-                raw_bit_rate_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = bit_rate
-                raw_rebuf_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = rebuf
-                bw_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = bw
-                raw_smooth_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = smooth
-                raw_reward_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = reward
+                    # cal rebuf ratio
+                    total_rebuf_time[scheme][log_file[len('log_' + str(scheme) + '_'):]] = 0
 
-                # cal rebuf ratio
-                total_rebuf_time[scheme][log_file[len('log_' + str(scheme) + '_'):]] = 0
+                    for i in raw_rebuf_all[scheme][log_file[len('log_' + str(scheme) + '_'):]]:
+                        if i > 0.0:
+                            total_rebuf_time[scheme][log_file[len('log_' + str(scheme) + '_'):]] += i
 
-                for i in raw_rebuf_all[scheme][log_file[len('log_' + str(scheme) + '_'):]]:
-                    if i > 0.0:
-                        total_rebuf_time[scheme][log_file[len('log_' + str(scheme) + '_'):]] += i
+                    rebuf_ratio[scheme][log_file[len('log_' + str(scheme) + '_'):]] = \
+                        (total_rebuf_time[scheme][log_file[len( 'log_' + str( scheme ) + '_' ):]] /  time_all[scheme][log_file[len('log_' + str(scheme) + '_'):]][-1])
 
-                rebuf_ratio[scheme][log_file[len('log_' + str(scheme) + '_'):]] = \
-                    (total_rebuf_time[scheme][log_file[len( 'log_' + str( scheme ) + '_' ):]] /  time_all[scheme][log_file[len('log_' + str(scheme) + '_'):]][-1])
-
-                break
+                    break
 
         #print(rebuf_ratio)
     # ---- ---- ---- ----
     # Reward records
     # ---- ---- ---- ----
+
+    N_TRACES = 7
+    N_TRIALS = 3
+    print('Traces passed: ', len(raw_bit_rate_all['GPT4'].keys())/(N_TRACES * N_TRIALS), '\n')
+    print('Traces passed: ', len(raw_bit_rate_all['GPT35'].keys())/(N_TRACES * N_TRIALS), '\n')
+    print('Traces passed: ', len(raw_bit_rate_all['Default'].keys())/(N_TRACES * N_TRIALS), '\n')
+
+    all_failed = True
+    for scheme in SCHEMES:
+        if len(raw_bit_rate_all[scheme].keys()) > 0:
+            all_failed = False
+            break
+    if all_failed:
+        print('All schemes failed. No plots.')
+        exit(0)
+
+
 
     log_file_all = []
     reward_all = {}
@@ -137,40 +161,14 @@ def main():
         smooth_all[scheme] = []
         rebuf_ratio_all[scheme] = []
 
-    for l in time_all[SCHEMES[0]]:
-        # what is l here?
-        # l will be something like "norway_ferry_7", representing the name of a trace
-        # print(l)
-
-        # assume that the schemes are okay, then flip the flag if they are not
-        schemes_check = True
-
-        # all schemes must pass the check
-        for scheme in SCHEMES:
-            # print(l not in time_all[scheme])
-            # check 1: l is a trace name. is the trace name found in every scheme? if not, we fail
-            # check 2: is the length of the log for trace "l" less than the video length? if not, we fail
-            if l not in time_all[scheme] or len(time_all[scheme][l]) < VIDEO_LEN:
-                # print all the bad ls
-                # print(l)
-                # print(scheme)
-                schemes_check = False
-                break
-        if schemes_check:
-            log_file_all.append(l)
-            for scheme in SCHEMES:
-                #print(raw_reward_all[scheme], "----------------------")
-                reward_all[scheme].append(np.sum(raw_reward_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
-                bit_rate_all[scheme].append(np.sum(raw_bit_rate_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
-                rebuf_all[scheme].append(np.sum(raw_rebuf_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
-                smooth_all[scheme].append(np.sum(raw_smooth_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
-                # print()
-                rebuf_ratio_all[scheme].append((rebuf_ratio[scheme][l]))
-
-
-
-    #print(reward_all[scheme], scheme)
-
+    
+    for scheme in SCHEMES:
+        for l in raw_bit_rate_all[scheme].keys():
+            reward_all[scheme].append(np.sum(raw_reward_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
+            bit_rate_all[scheme].append(np.sum(raw_bit_rate_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
+            rebuf_all[scheme].append(np.sum(raw_rebuf_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
+            smooth_all[scheme].append(np.sum(raw_smooth_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
+            rebuf_ratio_all[scheme].append((rebuf_ratio[scheme][l]))
 
     mean_rewards = {}
     error_bar = {}
@@ -189,6 +187,7 @@ def main():
 
         mean_bitrate[scheme] = round(np.mean(bit_rate_all[scheme])/K_IN_M, 2)
         mean_rebuf[scheme] = round(np.mean(rebuf_all[scheme]), 3)
+
         per_rebuf[scheme] = round(np.percentile(rebuf_all[scheme], 90), 3)
         mean_smooth[scheme] = round(np.mean(smooth_all[scheme]), 3)
 
@@ -215,7 +214,7 @@ def main():
     # colors = [COLOR_MAP(i) for i in np.linspace(0, 1, len(ax.lines))]
     # for i,j in enumerate(ax.lines):
     #     j.set_color(colors[i])
-        
+
     print(SCHEMES_REW)
     plot_metric_bar(reward_all, 'Mean QoE Score', 'State Design', './figs/5G', 'reward_5G.png')
     plot_metric_cdf(reward_all, 'QoE Score', './figs/5G', 'reward_cdf_5G.png')
@@ -262,9 +261,6 @@ def plot_metric_cdf(metric, xlabel, directory, filename):
         os.makedirs(directory, exist_ok=True)
     plt.savefig(f'{directory}/{filename}', bbox_inches='tight', dpi=300)
     plt.clf()
-
-
-
 
 if __name__ == '__main__':
     main()

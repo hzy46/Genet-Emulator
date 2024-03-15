@@ -4,13 +4,14 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 14})
 
 RESULTS_FOLDER = '../emu_results/Starlink/'
+#RESULTS_FOLDER = '../Oboe_results/synthetic/'
 TRACE_FOLDER = '../data/Starlink/'
 NUM_BINS = 100
 BITS_IN_BYTE = 8.0
 MILLISEC_IN_SEC = 1000.0
 M_IN_B = 1000000.0
 VIDEO_LEN = 48
-VIDEO_BIT_RATE = [300, 750, 1200, 1850, 2850, 4300]  # Kbps
+VIDEO_BIT_RATE = [1850, 2850, 4300, 12000, 24000, 53000]  # Kbps
 K_IN_M = 1000.0
 REBUF_P = 10
 SMOOTH_P = 1
@@ -19,6 +20,7 @@ SIM_DP = 'sim_dp'
 SCHEMES = ['Default', 'GPT4', 'GPT35']
 # SCHEMES = ['BufferBased', 'RL', 'RobustMPC']
 # SCHEMES = ['BufferBased', 'GPT4', 'GPT35', 'Default' 'RobustMPC']
+
 
 def compute_cdf(data):
     """ Return the cdf of input data.
@@ -59,6 +61,8 @@ def main():
 
     log_files = os.listdir(RESULTS_FOLDER)
     for log_file in log_files:
+        print(log_file)
+        skip_log = False
 
         time_ms = []
         bit_rate = []
@@ -70,10 +74,14 @@ def main():
         smooth =[]
 
         #print(log_file)
-
         with open(RESULTS_FOLDER + log_file, 'r') as f:
-
-            for i, line in enumerate(f):
+            lines = f.readlines()
+            if len(lines) < VIDEO_LEN:
+                # skip logs where model fails to stream
+                print('skipping', log_file)
+                skip_log = True
+                continue
+            for i, line in enumerate(lines):
                 if i == 0:
                     continue # skip the headers
                 parse = line.split()
@@ -83,43 +91,61 @@ def main():
                 time_ms.append(float(parse[0]))
                 bit_rate.append(int(parse[1]))
                 buff.append(float(parse[2]))
-                bw.append(float(parse[4]) / float(parse[5]) * BITS_IN_BYTE * MILLISEC_IN_SEC / M_IN_B)
+                bw.append(float(parse[4]) / max(float(parse[5]), 1e-6) * BITS_IN_BYTE * MILLISEC_IN_SEC / M_IN_B)
                 rebuf.append(float(parse[3]))
                 smooth.append(float(parse[6]))
                 reward.append(float(parse[7]))
             #print( reward, "--------------------" )
+        if not skip_log:
+            print('log_file', log_file)
+            time_ms = np.array(time_ms)
+            time_ms -= time_ms[0]
 
-        time_ms = np.array(time_ms)
-        time_ms -= time_ms[0]
+            # print log_file
 
-        # print log_file
+            for scheme in SCHEMES:
+                if scheme in log_file:
+                    time_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = time_ms
 
-        for scheme in SCHEMES:
-            if scheme in log_file:
-                time_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = time_ms
+                    raw_bit_rate_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = bit_rate
+                    raw_rebuf_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = rebuf
+                    bw_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = bw
+                    raw_smooth_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = smooth
+                    raw_reward_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = reward
 
-                raw_bit_rate_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = bit_rate
-                raw_rebuf_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = rebuf
-                bw_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = bw
-                raw_smooth_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = smooth
-                raw_reward_all[scheme][log_file[len('log_' + str(scheme) + '_'):]] = reward
+                    # cal rebuf ratio
+                    total_rebuf_time[scheme][log_file[len('log_' + str(scheme) + '_'):]] = 0
 
-                # cal rebuf ratio
-                total_rebuf_time[scheme][log_file[len('log_' + str(scheme) + '_'):]] = 0
+                    for i in raw_rebuf_all[scheme][log_file[len('log_' + str(scheme) + '_'):]]:
+                        if i > 0.0:
+                            total_rebuf_time[scheme][log_file[len('log_' + str(scheme) + '_'):]] += i
 
-                for i in raw_rebuf_all[scheme][log_file[len('log_' + str(scheme) + '_'):]]:
-                    if i > 0.0:
-                        total_rebuf_time[scheme][log_file[len('log_' + str(scheme) + '_'):]] += i
+                    rebuf_ratio[scheme][log_file[len('log_' + str(scheme) + '_'):]] = \
+                        (total_rebuf_time[scheme][log_file[len( 'log_' + str( scheme ) + '_' ):]] /  time_all[scheme][log_file[len('log_' + str(scheme) + '_'):]][-1])
 
-                rebuf_ratio[scheme][log_file[len('log_' + str(scheme) + '_'):]] = \
-                    (total_rebuf_time[scheme][log_file[len( 'log_' + str( scheme ) + '_' ):]] /  time_all[scheme][log_file[len('log_' + str(scheme) + '_'):]][-1])
-
-                break
+                    break
 
         #print(rebuf_ratio)
     # ---- ---- ---- ----
     # Reward records
     # ---- ---- ---- ----
+
+    N_TRACES = 11
+    N_TRIALS = 3
+    print('Traces passed: ', len(raw_bit_rate_all['GPT4'].keys())/(N_TRACES * N_TRIALS), '\n')
+    print('Traces passed: ', len(raw_bit_rate_all['GPT35'].keys())/(N_TRACES * N_TRIALS), '\n')
+    print('Traces passed: ', len(raw_bit_rate_all['Default'].keys())/(N_TRACES * N_TRIALS), '\n')
+
+    all_failed = True
+    for scheme in SCHEMES:
+        if len(raw_bit_rate_all[scheme].keys()) > 0:
+            all_failed = False
+            break
+    if all_failed:
+        print('All schemes failed. No plots.')
+        exit(0)
+
+
 
     log_file_all = []
     reward_all = {}
@@ -135,40 +161,28 @@ def main():
         smooth_all[scheme] = []
         rebuf_ratio_all[scheme] = []
 
-    for l in time_all[SCHEMES[0]]:
-        # what is l here?
-        # l will be something like "norway_ferry_7", representing the name of a trace
-        # print(l)
+    sorted_logs = sorted(raw_bit_rate_all['GPT4'].keys())  # all logs pass so no issue 
+    for scheme in SCHEMES:
+        # for l in raw_bit_rate_all[scheme].keys():
+        for l in sorted_logs:
+            print(scheme, l)
+            reward_all[scheme].append(np.sum(raw_reward_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
+            bit_rate_all[scheme].append(np.sum(raw_bit_rate_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
+            rebuf_all[scheme].append(np.sum(raw_rebuf_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
+            smooth_all[scheme].append(np.sum(raw_smooth_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
+            rebuf_ratio_all[scheme].append((rebuf_ratio[scheme][l]))
 
-        # assume that the schemes are okay, then flip the flag if they are not
-        schemes_check = True
 
-        # all schemes must pass the check
+    # line plot of reward -- Absolute Performance
+    for i in range(3):
         for scheme in SCHEMES:
-            # print(l not in time_all[scheme])
-            # check 1: l is a trace name. is the trace name found in every scheme? if not, we fail
-            # check 2: is the length of the log for trace "l" less than the video length? if not, we fail
-            if l not in time_all[scheme] or len(time_all[scheme][l]) < VIDEO_LEN:
-                # print all the bad ls
-                # print(l)
-                # print(scheme)
-                schemes_check = False
-                break
-        if schemes_check:
-            log_file_all.append(l)
-            for scheme in SCHEMES:
-                #print(raw_reward_all[scheme], "----------------------")
-                reward_all[scheme].append(np.sum(raw_reward_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
-                bit_rate_all[scheme].append(np.sum(raw_bit_rate_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
-                rebuf_all[scheme].append(np.sum(raw_rebuf_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
-                smooth_all[scheme].append(np.sum(raw_smooth_all[scheme][l][1:VIDEO_LEN])/VIDEO_LEN)
-                # print()
-                rebuf_ratio_all[scheme].append((rebuf_ratio[scheme][l]))
-
-
-
-    #print(reward_all[scheme], scheme)
-
+            plt.plot(reward_all[scheme][11*(i):11*(i+1)], label=scheme)
+        plt.title(f'Trial={i+1}')
+        plt.ylabel(f'Average QoE Score')
+        plt.xlabel('Trace Index')
+        plt.legend()
+        plt.savefig(f'./figs/Starlink/reward_over_time_trial_{i+1}.png', bbox_inches='tight', dpi=300)
+        plt.clf()
 
     mean_rewards = {}
     error_bar = {}
@@ -187,6 +201,7 @@ def main():
 
         mean_bitrate[scheme] = round(np.mean(bit_rate_all[scheme])/K_IN_M, 2)
         mean_rebuf[scheme] = round(np.mean(rebuf_all[scheme]), 3)
+
         per_rebuf[scheme] = round(np.percentile(rebuf_all[scheme], 90), 3)
         mean_smooth[scheme] = round(np.mean(smooth_all[scheme]), 3)
 
@@ -195,24 +210,21 @@ def main():
 
     print(mean_rebuf_ratio, "--------mean_rebuf_ratio")
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
 
 
-    # for scheme in SCHEMES:
-    #     ax.plot(reward_all[scheme])
+    for scheme in SCHEMES:
+        ax.plot(reward_all[scheme])
 
     SCHEMES_REW = []
     for scheme in SCHEMES:
-        SCHEMES_REW.append(scheme + ': '
-                           + 'reward: ' + str(mean_rewards[scheme]) + '±' + str(error_bar[scheme]) + ' ' 
-                            + ' bitrate: ' + str(mean_bitrate[scheme]) + ' '
-                           + ' percent rebuf: ' + str(per_rebuf[scheme]) + ' '
-                           + 'rebuf ratio: ' + str(mean_rebuf_ratio[scheme]) + ' '
-                           + 'smooth: ' + str(mean_smooth[scheme]) + ' ') 
+        SCHEMES_REW.append(scheme + ': ' + 'bitrate: ' + str(mean_bitrate[scheme])
+                           + '% ' + 'rebuf: ' + str(mean_rebuf_ratio[scheme]))
 
         # SCHEMES_REW.append(scheme + ': ' + str(mean_rewards[scheme]))
 
+    # ABSOLUTE QoE DIFF AND RELATIVE PERFORMANCE
 
     # colors = [COLOR_MAP(i) for i in np.linspace(0, 1, len(ax.lines))]
     # for i,j in enumerate(ax.lines):
@@ -222,11 +234,11 @@ def main():
     plot_metric_bar(reward_all, 'Mean QoE Score', 'State Design', './figs/Starlink', 'reward_Starlink.png')
     plot_metric_cdf(reward_all, 'QoE Score', './figs/Starlink', 'reward_cdf_Starlink.png')
     plot_metric_bar(bit_rate_all, 'Mean bitrate (Mbps)', 'State Design', './figs/Starlink', 'mean_bitrate_Starlink.png')
-    plot_metric_cdf(bit_rate_all, 'Bitrate (Mbps)', './figs/Starlink', 'bitrate_cdf_Starlink.png')
+    plot_metric_cdf(bit_rate_all, 'bitrate (Mbps)', './figs/Starlink', 'bitrate_cdf_Starlink.png')
     plot_metric_bar(rebuf_all, 'Mean rebuf', 'State Design', './figs/Starlink', 'mean_rebuf_Starlink.png')
-    plot_metric_cdf(rebuf_all, 'Rebuf', './figs/Starlink', 'rebuf_cdf_Starlink.png')
+    plot_metric_cdf(rebuf_all, 'rebuf', './figs/Starlink', 'rebuf_cdf_Starlink.png')
     plot_metric_bar(smooth_all, 'Mean smoothness', 'State Design', './figs/Starlink', 'mean_smooth_Starlink.png')
-    plot_metric_cdf(smooth_all, 'Smoothness', './figs/Starlink', 'smooth_cdf_Starlink.png')
+    plot_metric_cdf(smooth_all, 'smoothness', './figs/Starlink', 'smooth_cdf_Starlink.png')
 
 def plot_metric_bar(metric, ylabel, xlabel, directory, filename):
     fig = plt.figure()
@@ -264,7 +276,6 @@ def plot_metric_cdf(metric, xlabel, directory, filename):
         os.makedirs(directory, exist_ok=True)
     plt.savefig(f'{directory}/{filename}', bbox_inches='tight', dpi=300)
     plt.clf()
-
 
 if __name__ == '__main__':
     main()
