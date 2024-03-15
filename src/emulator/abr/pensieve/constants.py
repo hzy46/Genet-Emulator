@@ -1,9 +1,9 @@
 MODEL_SAVE_INTERVAL = 500
-VIDEO_BIT_RATE = [300, 750, 1200, 1850, 2850, 4300]  # For starlink traces
-# VIDEO_BIT_RATE = [1850, 2850, 4300, 12000, 24000, 53000]  # For 4g and 5g traces
+# VIDEO_BIT_RATE = [300, 750, 1200, 1850, 2850, 4300]  # For starlink traces
+VIDEO_BIT_RATE = [1850, 2850, 4300, 12000, 24000, 53000]  # For 4g and 5g traces
 HD_REWARD = [1, 2, 3, 12, 15, 20]
 M_IN_K = 1000.0
-REBUF_PENALTY = 43  # 1 sec rebuffering -> 3 Mbps
+REBUF_PENALTY = 4.3  # 1 sec rebuffering -> 3 Mbps
 # REBUF_PENALTY = 165  # 1 sec rebuffering -> 3 Mbps
 SMOOTH_PENALTY = 1
 DEFAULT_QUALITY = 0  # default video quality without agent
