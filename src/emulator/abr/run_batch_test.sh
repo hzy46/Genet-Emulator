@@ -45,6 +45,7 @@ while [[ true ]]; do
             done
         done
     done
+    wait
     if [ $exist_task == "f" ]; then
         break
     fi
