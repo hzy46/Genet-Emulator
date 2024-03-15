@@ -37,6 +37,7 @@ for epoch in 4000 3900 3800 3700 3600; do
                     fi
                 fi
                 echo $ret_file
+                sleep 5s
                 bash run_single_test.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
                 _lock_parallelism 40
                 port=$((${port} + 5))
