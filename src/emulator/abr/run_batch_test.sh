@@ -32,7 +32,7 @@ for method in default gpt35 gpt4; do
             for trace_file in ${trace_files} ; do
                 mahimahi_link_file=${trace_dir}${trace_file}
                 bash run_single_test.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
-                _lock_parallelism 15
+                _lock_parallelism 2
                 port=$((${port} + 5))
             done
         done
