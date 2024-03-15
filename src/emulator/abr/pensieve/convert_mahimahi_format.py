@@ -43,10 +43,15 @@ def convert_to_mahimahi_trace(trace_path, out_trace_path):
             mf.write(str(millisec_time) + '\n')
             millisec_count = 0
             last_time = 0
+            hit_zero = False
             for i in range(len(throughput_all)):
                 throughput = throughput_all[i]
 
                 pkt_per_millisec = throughput*1000/8 / BYTES_PER_PKT
+
+                if pkt_per_millisec == 0:
+                    hit_zero = True
+                    print('Warning: pkt_per_millisec=0, at time_ms[{}]'.format(millisec_time))
 
                 millisec_count = 0
                 pkt_count = 0
@@ -58,6 +63,9 @@ def convert_to_mahimahi_trace(trace_path, out_trace_path):
                     to_send = np.floor(to_send)
 
                     for _ in range(int(to_send)):
+                        if hit_zero:
+                            print('Hit Non zero, at time_ms[{}]'.format(millisec_time))
+                            hit_zero = False
                         mf.write(str(millisec_time) + '\n')
 
                     pkt_count += to_send
