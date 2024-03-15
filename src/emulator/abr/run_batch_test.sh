@@ -1,4 +1,4 @@
-set -x
+# set -x
 
 function _lock_parallelism {
     parallelism_limit=$1
