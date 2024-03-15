@@ -30,7 +30,7 @@ for method in default gpt35 gpt4; do
             model_path="pensieve/data/all_starlink_eval_models/${method}-starlink/models/nn_model_ep_${epoch}.ckpt"
             for trace_file in ${trace_files} ; do
                 mahimahi_link_file=${trace_dir}${trace_file}
-                bash run_single_test.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${trace_file} &> /tmp/log-${method}-trial-${trial}-epoch-${epoch} &
+                bash run_single_test.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
                 _lock_parallelism 2
                 port=$((${port} + 5))
             done
