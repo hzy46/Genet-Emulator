@@ -191,7 +191,7 @@ def main():
                                   desired_capabilities=desired_caps)
 
         # run chrome
-        driver.set_page_load_timeout(10)
+        driver.set_page_load_timeout(300)
         driver.get(url)
 
         sleep(run_time)
