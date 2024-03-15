@@ -24,7 +24,7 @@ while [[ true ]]; do
     trace_files=`ls ${trace_dir}`
     exist_task=f
     for method in default gpt35 gpt4; do
-        summary_dir="pensieve/tests/5G/${method}-trial-${trial}-epoch-${epoch}"
+        summary_dir="pensieve/tests/5G/${method}"
         model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-5g/nn_model_ep_4000.ckpt"
         for trace_file in ${trace_files} ; do
             mahimahi_link_file=${trace_dir}${trace_file}
@@ -35,7 +35,7 @@ while [[ true ]]; do
             fi
             echo $ret_file
             sleep 5s
-            bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-5G-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
+            bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-5G-${method}-trace-${trace_file} &
             exist_task=t
             _lock_parallelism 100
             port=$((${port} + 5))
@@ -55,8 +55,8 @@ while [[ true ]]; do
     trace_files=`ls ${trace_dir}`
     exist_task=f
     for method in default gpt35 gpt4; do
-        summary_dir="pensieve/tests/4G/${method}-trial-${trial}-epoch-${epoch}"
-        model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-4g/nn_model_ep_${epoch}.ckpt"
+        summary_dir="pensieve/tests/4G/${method}"
+        model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-4g/nn_model_ep_4000.ckpt"
         for trace_file in ${trace_files} ; do
             mahimahi_link_file=${trace_dir}${trace_file}
             ret_file=${summary_dir}"/log_RL_"${trace_file}
@@ -66,7 +66,7 @@ while [[ true ]]; do
             fi
             echo $ret_file
             sleep 5s
-            bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-5G-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
+            bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-5G-${method}-trace-${trace_file} &
             exist_task=t
             _lock_parallelism 100
             port=$((${port} + 5))
