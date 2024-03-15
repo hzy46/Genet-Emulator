@@ -22,8 +22,8 @@ port=31000
 trace_dir="pensieve/data/starlink_scaled_mahimahi/"
 trace_files=`ls ${trace_dir}`
 
-for trial in 0 1 2 3 4; do
-    for epoch in 4000 3900 3800 3700 3600; do
+for epoch in 4000 3900 3800 3700 3600; do
+    for trial in 0 1 2 3 4; do
         for method in default gpt35 gpt4; do
             summary_dir="pensieve/tests/starlink/${method}-trial-${trial}-epoch-${epoch}"
             model_path="pensieve/data/mahimahi_new_best_models/all_starlink_eval_models/${method}-starlink/trial-${trial}/models/nn_model_ep_${epoch}.ckpt"
