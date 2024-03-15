@@ -12,6 +12,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from pensieve.virtual_browser.abr_server import run_abr_server
+import uuid
 
 # TO RUN: download https://pypi.python.org/packages/source/s/selenium/selenium-2.39.0.tar.gz
 # run sudo apt-get install python-setuptools
@@ -163,9 +164,8 @@ def main():
         default_chrome_user_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'abr_browser_dir/chrome_data_dir')
-        # chrome_user_dir = '/tmp/chrome_user_dir_id_' + process_id
-        chrome_user_dir = '/tmp/lesley_chrome_user_dir'  # + process_id
-        os.system('rm -r ' + chrome_user_dir)
+        chrome_user_dir = f'/tmp/lesley_chrome_user_dir-uuid-${str(uuid.uuid4())}'
+        # os.system('rm -r ' + chrome_user_dir)
         os.system('cp -r ' + default_chrome_user_dir + ' ' + chrome_user_dir)
 
         # to not display the page in browser

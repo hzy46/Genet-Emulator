@@ -15,8 +15,7 @@ function _lock_parallelism {
 } 
 
 # clear
-ps aux | grep virtual_browser | awk '{print $2}' | xargs kill
-ps aux | grep video_server | awk '{print $2}' | xargs kill
+bash clear.sh
 
 # starlink test
 port=31000
