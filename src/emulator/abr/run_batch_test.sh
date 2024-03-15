@@ -31,8 +31,16 @@ for method in default gpt35 gpt4; do
             model_path="pensieve/data/mahimahi_new_best_models/all_starlink_eval_models/${method}-starlink/trial-${trial}/models/nn_model_ep_${epoch}.ckpt"
             for trace_file in ${trace_files} ; do
                 mahimahi_link_file=${trace_dir}${trace_file}
-                bash run_single_test.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
-                _lock_parallelism 10
+                ret_file=${summary_dir}"/log_RL_"${trace_file}
+                if [ -f ${ret_file} ]; then
+                    ret_file_size=$(stat -c%s "$ret_file")
+                    if [ "$ret_file_size" -ge "130" ]; then
+                        continue
+                    fi
+                fi
+                echo ret_file
+                # bash run_single_test.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
+                # _lock_parallelism 10
                 port=$((${port} + 5))
             done
         done
