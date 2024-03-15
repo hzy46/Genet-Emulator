@@ -12,4 +12,4 @@ def main(path):
             os.remove(path)
 
 if __name__ == '__main__':
-    main()
+    fire.Fire(main)

@@ -33,7 +33,7 @@ while [[ true ]]; do
                     ret_file=${summary_dir}"/log_RL_"${trace_file}
                     python check_log_file.py ${ret_file}  # delete if not valid
                     if [ -f ${ret_file} ]; then
-                        contine
+                        continue
                     fi
                     echo $ret_file
                     sleep 5s
