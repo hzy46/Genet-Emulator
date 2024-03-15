@@ -6,7 +6,7 @@ def main(path):
     if os.path.exists(path) is True:
         try:
             trace_df = pd.read_csv(path, delimiter="\t")
-            assert len(trace) == 49
+            assert len(trace_df) == 49
         except Exception as e:
             print("will delete {}".format(path))
             os.remove(path)
