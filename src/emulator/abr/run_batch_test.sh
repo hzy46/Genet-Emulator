@@ -38,7 +38,7 @@ for trial in 0 1 2 3 4; do
                 fi
                 echo $ret_file
                 bash run_single_test.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-${method}-trial-${trial}-epoch-${epoch}-trace-${trace_file} &
-                _lock_parallelism 15
+                _lock_parallelism 60
                 port=$((${port} + 5))
             done
         done
