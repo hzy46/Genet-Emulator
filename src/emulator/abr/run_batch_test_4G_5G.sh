@@ -25,7 +25,7 @@ while [[ true ]]; do
     exist_task=f
     for method in default gpt35 gpt4; do
         summary_dir="pensieve/tests/5G/${method}"
-        model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-5g/nn_model_ep_4000.ckpt"
+        model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-5g/nn_model_ep_40000.ckpt"
         for trace_file in ${trace_files} ; do
             mahimahi_link_file=${trace_dir}${trace_file}
             ret_file=${summary_dir}"/log_RL_"${trace_file}
@@ -56,7 +56,7 @@ while [[ true ]]; do
     exist_task=f
     for method in default gpt35 gpt4; do
         summary_dir="pensieve/tests/4G/${method}"
-        model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-4g/nn_model_ep_4000.ckpt"
+        model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-4g/nn_model_ep_40000.ckpt"
         for trace_file in ${trace_files} ; do
             mahimahi_link_file=${trace_dir}${trace_file}
             ret_file=${summary_dir}"/log_RL_"${trace_file}
