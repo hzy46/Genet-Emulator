@@ -12,6 +12,9 @@ summary_dir=$3
 trace_file=$4
 model_path=$5
 
+# for tensorflow, force cpu
+export CUDA_VISIBLE_DEVICES=""
+
 mkdir -p ${summary_dir}
 
 video_server_port=$((${base_port} + 1))
