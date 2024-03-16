@@ -17,36 +17,36 @@ function _lock_parallelism {
 # clear
 bash clear.sh
 
-while [[ true ]]; do
-    # starlink test
-    port=31000
-    trace_dir="pensieve/data/5G/"
-    trace_files=`ls ${trace_dir}`
-    exist_task=f
-    for method in default gpt35 gpt4; do
-        summary_dir="pensieve/tests/5G/${method}"
-        model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-5g/nn_model_ep_40000.ckpt"
-        for trace_file in ${trace_files} ; do
-            mahimahi_link_file=${trace_dir}${trace_file}
-            ret_file=${summary_dir}"/log_RL_"${trace_file}
-            python check_log_file.py ${ret_file}  # delete if not valid
-            if [ -f ${ret_file} ]; then
-                continue
-            fi
-            echo $ret_file
-            sleep 5s
-            bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-5G-${method}-trace-${trace_file} &
-            exist_task=t
-            _lock_parallelism 10
-            port=$((${port} + 5))
-        done
-    done
-    _lock_parallelism 1
-    wait
-    if [ $exist_task == "f" ]; then
-        break
-    fi
-done
+# while [[ true ]]; do
+#     # starlink test
+#     port=31000
+#     trace_dir="pensieve/data/5G/"
+#     trace_files=`ls ${trace_dir}`
+#     exist_task=f
+#     for method in default gpt35 gpt4; do
+#         summary_dir="pensieve/tests/5G/${method}"
+#         model_path="pensieve/data/mahimahi_new_best_models/gpt_eval_models/${method}-5g/nn_model_ep_40000.ckpt"
+#         for trace_file in ${trace_files} ; do
+#             mahimahi_link_file=${trace_dir}${trace_file}
+#             ret_file=${summary_dir}"/log_RL_"${trace_file}
+#             python check_log_file.py ${ret_file}  # delete if not valid
+#             if [ -f ${ret_file} ]; then
+#                 continue
+#             fi
+#             echo $ret_file
+#             sleep 5s
+#             bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-5G-${method}-trace-${trace_file} &
+#             exist_task=t
+#             _lock_parallelism 10
+#             port=$((${port} + 5))
+#         done
+#     done
+#     _lock_parallelism 1
+#     wait
+#     if [ $exist_task == "f" ]; then
+#         break
+#     fi
+# done
 
 while [[ true ]]; do
     # starlink test
@@ -66,7 +66,7 @@ while [[ true ]]; do
             fi
             echo $ret_file
             sleep 5s
-            bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-5G-${method}-trace-${trace_file} &
+            bash run_single_test_4G_5G.sh ${port} ${mahimahi_link_file} ${summary_dir} ${trace_file} ${model_path} &> /tmp/log-4G-${method}-trace-${trace_file} &
             exist_task=t
             _lock_parallelism 60
             port=$((${port} + 5))
